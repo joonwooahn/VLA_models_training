@@ -267,11 +267,11 @@ class FinetuneConfig:
     data_root_dir: Path = DATA_DIR     # Path to Open-X dataset directory
 
     # vla_path: str = "/path/to/your/pretrained-univla-7b"            # Path to your local UniVLA path
-    vla_path: str = "./univla-7b"            # Path to your local UniVLA path
+    vla_path: str = "./vla_scripts/univla-7b"            # Path to your local UniVLA path
     
     # lam_path: str = "latent_action_model/logs/task_centric_lam_stage2/epoch=0-step=200000.ckpt"
-    lam_path: str = "./univla-latent-action-model/lam-stage-2.ckpt"
-    dataset_name: str = "real_world"                                    # Name of fine-tuning dataset (e.g., `droid_wipe`)
+    lam_path: str = "./vla_scripts/univla-latent-action-model/lam-stage-2.ckpt"
+    dataset_name: str = "rlwrld"                                    # Name of fine-tuning dataset (e.g., `droid_wipe`)
     run_root_dir: Path = Path("runs")                               # Path to directory to store logs & checkpoints
     adapter_tmp_dir: Path = Path("adapter-tmp")                     # Temporary directory for LoRA weights before fusing
 

@@ -1,0 +1,86 @@
+Name: univla_100_percent_pos_only_single_arm_robot_view_convert
+Command: bash -c source ~/miniconda3/etc/profile.d/conda.sh && conda activate univla_train && python /virtual_lab/rlwrld/david/UniVLA/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py --condition univla_100_percent_pos_only_single_arm_robot_view --input-dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube --output-dir /virtual_lab/rlwrld/david/UniVLA/converted_data
+Return code: 0
+Stdout:
+Ablation Condition: univla_100_percent_pos_only_single_arm_robot_view
+State indices: 31 dims
+Action indices: 21 dims
+Camera keys: ['observation.images.robot0_robotview']
+Max episodes: None
+Starting conversion for condition: univla_100_percent_pos_only_single_arm_robot_view
+Output directory: /virtual_lab/rlwrld/david/UniVLA/converted_data/univla_100_percent_pos_only_single_arm_robot_view
+Found 57 episodes
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000000.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000001.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000002.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000003.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000004.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000005.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000006.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000007.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000008.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000009.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000010.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000011.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000012.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000013.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000014.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000015.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000016.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000017.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000018.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000019.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000020.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000021.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000022.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000023.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000024.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000025.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000026.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000027.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000028.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000029.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000030.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000031.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000032.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000033.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000034.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000035.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000036.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000037.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000038.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000039.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000040.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000041.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000042.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000043.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000044.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000045.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000046.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000047.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000048.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000049.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000050.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000051.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000052.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000053.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000054.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000055.mp4
+Warning: Video file not found: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube/videos/observation.images.robot0_robotview/episode_000056.mp4
+Conversion completed: 57/57 episodes successful
+Metadata saved to /virtual_lab/rlwrld/david/UniVLA/converted_data/univla_100_percent_pos_only_single_arm_robot_view/metadata.json
+✅ Successfully converted 57 episodes for condition: univla_100_percent_pos_only_single_arm_robot_view
+
+Stderr:
+
+Converting episodes:   0%|          | 0/57 [00:00<?, ?it/s]
+Converting episodes:   2%|▏         | 1/57 [00:00<00:09,  5.76it/s]
+Converting episodes:  18%|█▊        | 10/57 [00:00<00:01, 41.47it/s]
+Converting episodes:  32%|███▏      | 18/57 [00:00<00:00, 53.76it/s]
+Converting episodes:  44%|████▍     | 25/57 [00:00<00:00, 58.99it/s]
+Converting episodes:  56%|█████▌    | 32/57 [00:00<00:00, 59.02it/s]
+Converting episodes:  68%|██████▊   | 39/57 [00:00<00:00, 61.50it/s]
+Converting episodes:  81%|████████  | 46/57 [00:00<00:00, 62.00it/s]
+Converting episodes:  93%|█████████▎| 53/57 [00:00<00:00, 63.71it/s]
+Converting episodes: 100%|██████████| 57/57 [00:00<00:00, 57.44it/s]
+

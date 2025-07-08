@@ -1,0 +1,8 @@
+Name: univla_100_percent_pos_only_single_arm_robot_view_train
+Command: sbatch train_univla_100_percent_pos_only_single_arm_robot_view.sh
+Return code: 1
+Stdout:
+
+Stderr:
+sbatch: error: Batch job submission failed: Unable to contact slurm controller (connect failure)
+
