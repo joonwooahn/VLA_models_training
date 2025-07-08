@@ -140,7 +140,7 @@ class AblationCondition:
     
     # Training specific
     max_steps: int = 10000
-    batch_size: int = 8
+    batch_size: int = 2
     learning_rate: float = 1e-4
     
     @property

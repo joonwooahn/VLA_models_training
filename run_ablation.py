@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess
 import argparse
+import time
 from pathlib import Path
 from ablation_config import (
     ABLATION_CONDITIONS, 
@@ -62,7 +63,7 @@ def create_univla_command(condition, use_sbatch=False):
     # 데이터 변환 명령 (conda 환경 활성화 포함)
     convert_cmd = [
         "bash", "-c", 
-        f"source ~/miniconda3/etc/profile.d/conda.sh && conda activate univla_train && python /virtual_lab/rlwrld/david/UniVLA/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py --condition {condition.name} --input-dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_cube --output-dir /virtual_lab/rlwrld/david/UniVLA/converted_data"
+        f"source ~/miniconda3/etc/profile.d/conda.sh && conda activate univla_train && python univla/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py --condition {condition.name} --input-dir /home/david/.cache/huggingface/lerobot/RLWRLD/allex_cube --output-dir ./converted_data"
     ]
     
     if use_sbatch:
@@ -79,10 +80,10 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate univla_train
 
 # 훈련 실행
-python /virtual_lab/rlwrld/david/UniVLA/vla_scripts/finetune_rlwrld_ablation.py \\
+python univla/vla_scripts/finetune_rlwrld_ablation.py \\
     --condition {condition.name} \\
-    --data-root-dir /virtual_lab/rlwrld/david/UniVLA/converted_data \\
-    --output-dir /virtual_lab/rlwrld/david/UniVLA/outputs/{condition.get_output_dir()} \\
+    --data-root-dir ./converted_data/{condition.name} \\
+    --output-dir ./outputs/{condition.get_output_dir()} \\
     --max-steps {condition.max_steps} \\
     --batch-size {condition.batch_size} \\
     --learning-rate {condition.learning_rate}
@@ -92,7 +93,7 @@ python /virtual_lab/rlwrld/david/UniVLA/vla_scripts/finetune_rlwrld_ablation.py 
         # 직접 실행 명령 (워커노드에서 실행용)
         train_cmd = [
             "bash", "-c",
-            f"source ~/miniconda3/etc/profile.d/conda.sh && conda activate univla_train && python /virtual_lab/rlwrld/david/UniVLA/vla_scripts/finetune_rlwrld_ablation.py --condition {condition.name} --data-root-dir /virtual_lab/rlwrld/david/UniVLA/converted_data --output-dir /virtual_lab/rlwrld/david/UniVLA/outputs/{condition.get_output_dir()} --max-steps {condition.max_steps} --batch-size {condition.batch_size} --learning-rate {condition.learning_rate}"
+            f"source ~/miniconda3/etc/profile.d/conda.sh && conda activate univla_train && python univla/vla_scripts/finetune_rlwrld_ablation.py --condition {condition.name} --data-root-dir ./converted_data/{condition.name} --output-dir ./outputs/{condition.get_output_dir()} --max-steps {condition.max_steps} --batch-size {condition.batch_size} --learning-rate {condition.learning_rate}"
         ]
         return {"convert": convert_cmd, "train": train_cmd}
 
@@ -235,139 +236,179 @@ def _log_result(name: str, cmd: list, result):
         f.write(f"Stderr:\n{result.stderr}\n")
 
 
+def run_ablation(model, data_percent, state_type, action_type, camera_type, 
+                 output_dir="./outputs", max_steps=10000):
+    """기본 ablation 실행 함수"""
+    print(f"🚀 Running ablation for {model} model")
+    print(f"📊 Configuration: {data_percent}% data, {state_type} state, {action_type} action, {camera_type} camera")
+    
+    # 조건 이름 생성
+    condition_name = f"{model}_{data_percent}_percent_{state_type}_{action_type}_{camera_type}"
+    
+    # 데이터 변환
+    print("📂 Converting data...")
+    convert_log_file = f"ablation_results_{condition_name}_convert.log"
+    convert_cmd = [
+        "python", "univla/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py",
+        "--condition", condition_name,
+        "--output-dir", "./converted_data",
+        "--data-percent", str(data_percent)
+    ]
+    
+    with open(convert_log_file, 'w') as f:
+        print(f"💾 Logging conversion to {convert_log_file}")
+        result = subprocess.run(convert_cmd, stdout=f, stderr=subprocess.STDOUT, text=True)
+    
+    if result.returncode != 0:
+        print(f"❌ Data conversion failed! Check {convert_log_file}")
+        return False
+    
+    print("✅ Data conversion completed")
+    
+    # 훈련 실행
+    print("🎯 Starting training...")
+    train_log_file = f"ablation_results_{condition_name}_train.log"
+    train_cmd = [
+        "python", "univla/vla_scripts/finetune_rlwrld_ablation.py",
+        "--condition", condition_name,
+        "--data-root-dir", "./converted_data", 
+        "--output-dir", output_dir,
+        "--max-steps", str(max_steps),
+        "--batch-size", "16",  # A100 최적화된 배치 크기 (2 -> 16)
+        "--learning-rate", "1e-4"
+    ]
+    
+    with open(train_log_file, 'w') as f:
+        print(f"💾 Logging training to {train_log_file}")
+        result = subprocess.run(train_cmd, stdout=f, stderr=subprocess.STDOUT, text=True)
+    
+    if result.returncode == 0:
+        print("✅ Training completed successfully!")
+        return True
+    else:
+        print(f"❌ Training failed! Check {train_log_file}")
+        return False
+
+
+def run_ablation_rtx4090_optimized(model, data_percent, state_type, action_type, camera_type, 
+                                   output_dir="./outputs", max_steps=10000, batch_size=1):
+    """RTX 4090 메모리 최적화 버전"""
+    print(f"🚀 Running RTX 4090 optimized ablation for {model} model")
+    print(f"📊 Configuration: {data_percent}% data, {state_type} state, {action_type} action, {camera_type} camera")
+    print(f"💾 Memory optimization: batch_size={batch_size}, gradient_checkpointing=True")
+    
+    # 조건 이름 생성
+    condition_name = f"{model}_{data_percent}_percent_{state_type}_{action_type}_{camera_type}"
+    
+    # 데이터 변환
+    print("📂 Converting data...")
+    convert_log_file = f"ablation_results_{condition_name}_convert.log"
+    convert_cmd = [
+        "python", "univla/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py",
+        "--condition", condition_name,
+        "--output-dir", "./converted_data",
+        "--data-percent", str(data_percent)
+    ]
+    
+    with open(convert_log_file, 'w') as f:
+        print(f"💾 Logging conversion to {convert_log_file}")
+        result = subprocess.run(convert_cmd, stdout=f, stderr=subprocess.STDOUT, text=True)
+    
+    if result.returncode != 0:
+        print(f"❌ Data conversion failed! Check {convert_log_file}")
+        return False
+    
+    print("✅ Data conversion completed")
+    
+    # 훈련 실행
+    print("🎯 Starting training...")
+    train_log_file = f"ablation_results_{condition_name}_train.log"
+    train_cmd = [
+        "python", "univla/vla_scripts/finetune_rlwrld_ablation.py",
+        "--condition", condition_name,
+        "--data-root-dir", "./converted_data", 
+        "--output-dir", output_dir,
+        "--max-steps", str(max_steps),
+        "--batch-size", str(batch_size),  # 메모리 최적화
+        "--learning-rate", "1e-4"
+    ]
+    
+    with open(train_log_file, 'w') as f:
+        print(f"💾 Logging training to {train_log_file}")
+        result = subprocess.run(train_cmd, stdout=f, stderr=subprocess.STDOUT, text=True)
+    
+    if result.returncode == 0:
+        print("✅ Training completed successfully!")
+        return True
+    else:
+        print(f"❌ Training failed! Check {train_log_file}")
+        return False
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run VLA ablation study")
-    
-    # 기존 방식 (condition name으로 지정)
-    parser.add_argument("--condition", type=str, help="Specific condition to run")
-    
-    # 새로운 방식 (개별 파라미터로 지정)
-    parser.add_argument("--model", type=str, choices=["gr00t", "pi0", "univla"], 
-                       help="Model type")
-    parser.add_argument("--data", type=str, choices=["20", "100"], 
-                       help="Data amount (20 percent or 100 percent)")
-    parser.add_argument("--state", type=str, choices=["pos_only", "full_state"], 
-                       help="State composition (pos_only or full_state)")
-    parser.add_argument("--action", type=str, choices=["single_arm", "bimanual"], 
-                       help="Action type (single_arm or bimanual)")
-    parser.add_argument("--camera", type=str, choices=["robot_view", "multi_view"], 
-                       help="Camera configuration (robot_view or multi_view)")
-    
-    # 유틸리티 옵션들
-    parser.add_argument("--list", action="store_true", help="List all available conditions")
-    parser.add_argument("--summary", action="store_true", help="Show conditions summary")
-    parser.add_argument("--all", action="store_true", help="Run all conditions")
-    parser.add_argument("--dry-run", action="store_true", help="Show commands without executing")
-    parser.add_argument("--use-sbatch", action="store_true", help="Use SBATCH for UniVLA training (default: direct execution)")
+    parser = argparse.ArgumentParser(description='Run VLA model ablation study')
+    parser.add_argument('--model', type=str, required=True, 
+                       choices=['univla', 'pi0', 'gr00t'],
+                       help='Model to train')
+    parser.add_argument('--data', type=int, required=True,
+                       help='Percentage of data to use (1-100)')
+    parser.add_argument('--state', type=str, required=True,
+                       choices=['pos_only', 'full_state'],
+                       help='State representation type')
+    parser.add_argument('--action', type=str, required=True,
+                       choices=['single_arm', 'bimanual'],
+                       help='Action space type')
+    parser.add_argument('--camera', type=str, required=True,
+                       choices=['robot_view', 'third_person', 'multi_view'],
+                       help='Camera configuration')
+    parser.add_argument('--output-dir', type=str, default='./outputs',
+                       help='Output directory for results')
+    parser.add_argument('--max-steps', type=int, default=10000,
+                       help='Maximum training steps')
+    parser.add_argument('--rtx4090', action='store_true',
+                       help='Use RTX 4090 memory optimization (batch_size=1)')
     
     args = parser.parse_args()
     
-    if args.summary:
-        print_conditions_summary()
-        return
+    # 환경 변수 설정
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     
-    if args.list:
-        print("All available ablation conditions:")
-        for i, name in enumerate(list_all_conditions(), 1):
-            condition = get_condition_by_name(name)
-            if condition:
-                data_pct = "20 percent" if condition.data_amount == DataAmount.PERCENT_20 else "100 percent"
-                state_desc = "pos_only" if condition.state_type == StateType.POSITION_ONLY else "full_state"
-                action_desc = "single_arm" if condition.action_type == ActionType.SINGLE_ARM else "bimanual"
-                camera_desc = "robot_view" if condition.camera_type == CameraType.ROBOT_VIEW else "multi_view"
-                
-                print(f"{i:2d}. {name}")
-                print(f"    Model: {condition.model_type.value}, Data: {data_pct}, State: {state_desc}")
-                print(f"    Action: {action_desc}, Camera: {camera_desc}")
-                print()
-        return
-    
-    # 개별 파라미터로 조건 생성
-    if args.model and args.data and args.state and args.action and args.camera:
-        # 파라미터를 enum으로 변환
-        model_type = ModelType(args.model)
-        data_amount = DataAmount.PERCENT_20 if args.data == "20" else DataAmount.PERCENT_100
-        state_type = StateType.POSITION_ONLY if args.state == "pos_only" else StateType.FULL_STATE
-        action_type = ActionType.SINGLE_ARM if args.action == "single_arm" else ActionType.BIMANUAL
-        camera_type = CameraType.ROBOT_VIEW if args.camera == "robot_view" else CameraType.MULTI_VIEW
-        
-        # 조건 생성
-        condition = AblationCondition(
-            model_type=model_type,
-            data_amount=data_amount,
-            state_type=state_type,
-            action_type=action_type,
-            camera_type=camera_type
-        )
-        
-        print(f"Generated condition: {condition.name}")
-        print(f"Model: {args.model}, Data: {args.data} percent, State: {args.state}")
-        print(f"Action: {args.action}, Camera: {args.camera}")
-        
-        run_condition(condition, dry_run=args.dry_run, use_sbatch=args.use_sbatch)
-        return
-    
-    # 기존 방식 (condition name으로 지정)
-    if args.condition:
-        condition = get_condition_by_name(args.condition)
-        if not condition:
-            print(f"Error: Condition '{args.condition}' not found")
-            print(f"Available conditions: {len(list_all_conditions())} total")
-            print("Use --list to see all conditions")
-            return
-        
-        run_condition(condition, dry_run=args.dry_run, use_sbatch=args.use_sbatch)
-        
-    elif args.model and not (args.data and args.state and args.action and args.camera):
-        # 특정 모델의 모든 조건 실행
-        model_type = ModelType(args.model)
-        model_conditions = get_conditions_by_model(model_type)
-        
-        print(f"Running all {len(model_conditions)} conditions for {args.model.upper()}...")
-        
-        for i, condition in enumerate(model_conditions, 1):
-            print(f"\n[{i}/{len(model_conditions)}] Starting: {condition.name}")
-            run_condition(condition, dry_run=args.dry_run, use_sbatch=args.use_sbatch)
+    try:
+        if args.rtx4090:
+            print("🎯 RTX 4090 메모리 최적화 모드 활성화")
+            success = run_ablation_rtx4090_optimized(
+                model=args.model,
+                data_percent=args.data, 
+                state_type=args.state,
+                action_type=args.action,
+                camera_type=args.camera,
+                output_dir=args.output_dir,
+                max_steps=args.max_steps,
+                batch_size=1  # RTX 4090 최적화
+            )
+        else:
+            success = run_ablation(
+                model=args.model,
+                data_percent=args.data, 
+                state_type=args.state,
+                action_type=args.action,
+                camera_type=args.camera,
+                output_dir=args.output_dir,
+                max_steps=args.max_steps
+            )
             
-        print(f"\n✅ Completed all {len(model_conditions)} conditions for {args.model.upper()}!")
-        
-    elif args.all:
-        print(f"Running all {len(ABLATION_CONDITIONS)} conditions...")
-        print("This will run:")
-        print("- 3 models (gr00t, pi0, univla)")
-        print("- 2 data amounts (20 percent, 100 percent)")
-        print("- 2 state types (pos_only, full_state)")
-        print("- 2 action types (single_arm, bimanual)")
-        print("- 2 camera types (robot_view, multi_view)")
-        print(f"- Total: 3 × 2 × 2 × 2 × 2 = {len(ABLATION_CONDITIONS)} experiments")
-        
-        if not args.dry_run:
-            confirm = input("\nThis will take a very long time. Continue? (y/N): ")
-            if confirm.lower() != 'y':
-                print("Aborted.")
-                return
-        
-        for i, condition in enumerate(ABLATION_CONDITIONS, 1):
-            print(f"\n[{i}/{len(ABLATION_CONDITIONS)}] Starting: {condition.name}")
-            run_condition(condition, dry_run=args.dry_run, use_sbatch=args.use_sbatch)
+        if success:
+            print("🎉 Ablation study completed successfully!")
+        else:
+            print("❌ Ablation study failed!")
+            sys.exit(1)
             
-        print(f"\n✅ Completed all {len(ABLATION_CONDITIONS)} conditions!")
-        
-    else:
-        parser.print_help()
-        print(f"\nTotal available conditions: {len(ABLATION_CONDITIONS)}")
-        print("Use --summary to see organized breakdown")
-        print("\nExamples:")
-        print("  # Run specific condition by parameters")
-        print("  python run_ablation.py --model univla --data 100 --state pos_only --action single_arm --camera robot_view --dry-run")
-        print("  # Run specific condition by name")
-        print("  python run_ablation.py --condition univla_100_percent_pos_only_single_arm_robot_view --dry-run")
-        print("  # Run all conditions for a model")
-        print("  python run_ablation.py --model univla --dry-run")
-        print("  # List all conditions")
-        print("  python run_ablation.py --list")
+    except KeyboardInterrupt:
+        print("\n⚠️  Training interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
