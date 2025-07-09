@@ -176,9 +176,11 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
 ### pi0-1-2. 훈련
    #### 1-2-1. dataset 경로
    ```sh
+   conda activate lerobot
    python3
    > from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
    LeRobotDataset('RLWRLD/put_cube')
+   exit()
    ```
    ```sh
    cd .cache/huggingface/lerobot/RLWRLD/put_cube
@@ -243,7 +245,7 @@ bin/python packages/pi0/pi0_control.py --data-config allex_cube --env-name LiftO
    #### 1-1-1. univla conda 환경 설정
    ```sh
    cd univla
-   conda create -n univla python=3.10 -y
+   conda create -n univla_train python=3.10 -y
    conda activate univla_train
    conda install pytorch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 pytorch-cuda=12.1 -c pytorch -c nvidia -y
    pip install -e .
@@ -255,7 +257,7 @@ bin/python packages/pi0/pi0_control.py --data-config allex_cube --env-name LiftO
    pip install webdataset
    pip install --upgrade jax jaxlib ml_dtypes
    pip install tokenizers==0.19.1
-   pip install wandb dm-tree
+   pip install wandb dm-tree pandas
    ```
    
    #### 1-1-2. 기 훈련된 latent action model & vision large model 받기
