@@ -40,8 +40,8 @@ GIT_LFS_SKIP_SMUDGE=1 make sync
 * slurm에서 수행
 ```sh
 cd gr00t
-conda create -n gr00t python=3.10
-conda activate gr00t
+conda create -n gr00t_1.5 python=3.10
+conda activate gr00t_1.5
 pip install --upgrade setuptools
 pip install -e .[base]
 pip install --no-build-isolation flash-attn==2.7.1.post4
@@ -80,8 +80,8 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    
    # Conda 초기화 및 환경 활성화
    source ~/miniconda3/etc/profile.d/conda.sh
-   conda activate gr00t
-   echo "✅ Conda environment 'gr00t' activated."
+   conda activate gr00t_1.5
+   echo "✅ Conda environment 'gr00t_1.5' activated."
    
    mkdir -p tmp 2>/dev/null
    mkdir -p checkpoints 2>/dev/null
@@ -125,7 +125,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    
    #### 1-4-2. Isaac-GR00T에서 Inference 서버 실행 (터미널 1)
    ```sh
-   conda activate gr00t
+   conda activate gr00t_1.5
    python scripts/inference_service.py --server --model_path artifact/checkpoints/allex-bimanual-cube2 --embodiment_tag new_embodiment --data_config allex_cube --port 7777
    ```
    
