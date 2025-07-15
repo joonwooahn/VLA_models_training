@@ -1,0 +1,18 @@
+{"time":"2025-07-09T18:59:12.123976327+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T18:59:12.12398927+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_185912-azjuiekd/logs/debug-core.log"}
+{"time":"2025-07-09T18:59:12.12451753+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T18:59:12.124521558+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_185912-azjuiekd/logs/debug-core.log"}
+{"time":"2025-07-09T18:59:12.129935976+09:00","level":"INFO","msg":"created new stream","id":"azjuiekd"}
+{"time":"2025-07-09T18:59:12.129966658+09:00","level":"INFO","msg":"stream: started","id":"azjuiekd"}
+{"time":"2025-07-09T18:59:12.130001196+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"azjuiekd"}}
+{"time":"2025-07-09T18:59:12.130062625+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"azjuiekd"}}
+{"time":"2025-07-09T18:59:12.13008112+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"azjuiekd"}}
+{"time":"2025-07-09T18:59:12.512394815+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-09T18:59:12.51490333+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T18:59:14.127138427+09:00","level":"INFO","msg":"stream: closing","id":"azjuiekd"}
+{"time":"2025-07-09T18:59:14.12716869+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T18:59:14.127494194+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-09T18:59:15.44447963+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"azjuiekd"}}
+{"time":"2025-07-09T18:59:15.444531534+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"azjuiekd"}}
+{"time":"2025-07-09T18:59:15.444686662+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"azjuiekd"}}
+{"time":"2025-07-09T18:59:15.445318296+09:00","level":"INFO","msg":"stream: closed","id":"azjuiekd"}

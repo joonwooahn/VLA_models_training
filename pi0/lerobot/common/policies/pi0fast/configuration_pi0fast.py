@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional, List
 
 from lerobot.common.optim.optimizers import AdamWConfig
 from lerobot.common.optim.schedulers import (
@@ -27,6 +28,16 @@ class PI0FASTConfig(PreTrainedConfig):
     # Shorter state and action vectors will be padded
     max_state_dim: int = 32  # 32
     max_action_dim: int = 32  # 32
+
+    # Extended state and action vectors that are used by allex robot
+    use_extended_dim: bool = True
+    ext_state_dim: int = 180
+    ext_action_dim: int = 42
+
+    # State and action indices for proper joint filtering (for ablation studies)
+    # These indices specify which joints to use from the full state/action space
+    state_indices: Optional[List[int]] = None  # e.g., [0,1,2,3,4,5,6,7,8,9,10,11,12,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39] for right_arm pos_only
+    action_indices: Optional[List[int]] = None  # e.g., [0,1,2,3,4,5,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26] for right_arm
 
     # Image preprocessing
     resize_imgs_with_padding: tuple[int, int] = (224, 224)
@@ -72,7 +83,7 @@ class PI0FASTConfig(PreTrainedConfig):
     scheduler_decay_steps: int = 30_000
     scheduler_decay_lr: float = 2.5e-6
 
-    checkpoint_path: str = None
+    checkpoint_path: str | None = None
 
     padding_side: str = "right"
 

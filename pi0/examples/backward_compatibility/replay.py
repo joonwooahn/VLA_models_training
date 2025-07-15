@@ -35,8 +35,8 @@ from pprint import pformat
 
 import draccus
 
-from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.robots import (  # noqa: F401
+from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.common.robots import (  # noqa: F401
     Robot,
     RobotConfig,
     koch_follower,
@@ -44,8 +44,8 @@ from lerobot.robots import (  # noqa: F401
     so100_follower,
     so101_follower,
 )
-from lerobot.utils.robot_utils import busy_wait
-from lerobot.utils.utils import (
+from lerobot.common.utils.robot_utils import busy_wait
+from lerobot.common.utils.utils import (
     init_logging,
     log_say,
 )

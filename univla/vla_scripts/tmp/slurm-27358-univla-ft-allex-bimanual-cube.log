@@ -1,0 +1,71 @@
+✅ Conda environment 'univla_train' activated.
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld.py", line 10, in <module>
+    import torchvision.transforms as transforms
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import _meta_registrations, datasets, io, models, ops, transforms, utils
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torchvision/models/__init__.py", line 2, in <module>
+    from .convnext import *
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torchvision/models/convnext.py", line 8, in <module>
+    from ..ops.misc import Conv2dNormActivation, Permute
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torchvision/ops/__init__.py", line 1, in <module>
+    from ._register_onnx_ops import _register_custom_op
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torchvision/ops/_register_onnx_ops.py", line 5, in <module>
+    from torch.onnx import symbolic_opset11 as opset11
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/onnx/__init__.py", line 46, in <module>
+    from ._internal.exporter import (  # usort:skip. needs to be last to avoid circular import
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/onnx/_internal/exporter.py", line 44, in <module>
+    from torch.onnx._internal.fx import (
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/onnx/_internal/fx/__init__.py", line 1, in <module>
+    from .patcher import ONNXTorchPatcher
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/onnx/_internal/fx/patcher.py", line 11, in <module>
+    import transformers  # type: ignore[import]
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/__init__.py", line 26, in <module>
+    from . import dependency_versions_check
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/dependency_versions_check.py", line 16, in <module>
+    from .utils.versions import require_version, require_version_core
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/utils/__init__.py", line 33, in <module>
+    from .generic import (
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/utils/generic.py", line 42, in <module>
+    import jax.numpy as jnp
+  File "/virtual_lab/rlwrld/david/.local/lib/python3.10/site-packages/jax/__init__.py", line 37, in <module>
+    import jax.core as _core
+  File "/virtual_lab/rlwrld/david/.local/lib/python3.10/site-packages/jax/core.py", line 18, in <module>
+    from jax._src.core import (
+  File "/virtual_lab/rlwrld/david/.local/lib/python3.10/site-packages/jax/_src/core.py", line 38, in <module>
+    from jax._src import dtypes
+  File "/virtual_lab/rlwrld/david/.local/lib/python3.10/site-packages/jax/_src/dtypes.py", line 93, in <module>
+    float8_e3m4: type[np.generic] = ml_dtypes.float8_e3m4
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/ml_dtypes/__init__.py", line 71, in __getattr__
+    raise AttributeError(f'cannot import name {name!r} from {__name__!r}')
+AttributeError: cannot import name 'float8_e3m4' from 'ml_dtypes'. Did you mean: 'float8_e5m2'?
+[2025-07-04 14:42:47,232] torch.distributed.elastic.multiprocessing.api: [ERROR] failed (exitcode: 1) local_rank: 0 (pid: 3367070) of binary: /virtual_lab/rlwrld/david/miniconda3/envs/univla_train/bin/python
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/bin/torchrun", line 33, in <module>
+    sys.exit(load_entry_point('torch==2.2.0', 'console_scripts', 'torchrun')())
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 347, in wrapper
+    return f(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/run.py", line 812, in main
+    run(args)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/run.py", line 803, in run
+    elastic_launch(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 135, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 268, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+finetune_rlwrld.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-07-04_14:42:47
+  host      : worker-node12
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 3367070)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

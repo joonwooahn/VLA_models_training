@@ -12,6 +12,7 @@ import glob
 import json
 import argparse
 import shutil
+import random
 from tqdm import tqdm
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -20,7 +21,7 @@ from typing import List, Optional, Dict, Any
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from ablation_config import (
-    AblationCondition, StateType, ActionType, CameraType, DataAmount,
+    AblationCondition, StateType, ActionType, CameraType,
     get_condition_by_name
 )
 
@@ -29,144 +30,201 @@ def convert_lerobot_to_univla_format(input_dir: str, output_dir: str, condition:
     """Convert LeRobot format dataset to UniVLA format"""
     
     input_path = Path(input_dir)
-    output_path = Path(output_dir) / condition.name
+    base_output_path = Path(output_dir)
     
-    print(f"🔄 Converting data from {input_path} to {output_path}")
-    print(f"📊 Condition: {condition.name}")
+    # Create condition-specific output directory
+    output_path = base_output_path / condition.name
+    
+    # Check if conversion already exists and is complete
+    if output_path.exists():
+        # Check if conversion appears complete by looking for episodes
+        existing_episodes = list(output_path.glob("episode_*"))
+        if existing_episodes:
+            print(f"🔍 Found existing converted data at: {output_path}")
+            print(f"📂 {len(existing_episodes)} episodes already converted")
+            print(f"✅ Skipping conversion (data already exists)")
+            return
+    
+    print(f"🔄 Converting LeRobot dataset for UniVLA training...")
+    print(f"   - Input: {input_path}")
+    print(f"   - Output: {output_path}")
+    print(f"   - Model: {condition.model_type.value}")
+    print(f"   - Data: {condition.data_amount}%")
+    print(f"   - State: {condition.state_type.value}")
+    print(f"   - Action: {condition.action_type.value}")
+    print(f"   - Camera: {condition.camera_type.value}")
+    
+    # Set random seed for reproducible sampling
+    random.seed(42)
+    np.random.seed(42)
+    
+    # Get episode parquet files from data/chunk-000 directory
+    data_dir = input_path / "data" / "chunk-000"
+    episode_files = sorted([f for f in data_dir.glob("episode_*.parquet")])
+    
+    if condition.data_amount < 100:
+        max_episodes = int(len(episode_files) * condition.data_amount / 100)
+        
+        # Set random seed for reproducible sampling
+        random.seed(42)
+        np.random.seed(42)
+        
+        # Random sampling instead of sequential sampling
+        episode_files = random.sample(episode_files, max_episodes)
+        episode_files = sorted(episode_files)  # Sort selected episodes for consistent naming
+        print(f"📊 Using {max_episodes} episodes ({condition.data_amount}% of data - randomly sampled)")
+    else:
+        print(f"📊 Using all {len(episode_files)} episodes (100% of data)")
     
     # Create output directory
-    os.makedirs(output_path, exist_ok=True)
-    
-    # Find all episodes
-    episode_dirs = []
-    
-    # Try different possible structures
-    possible_patterns = [
-        input_path / "episode_*",
-        input_path / "*" / "episode_*",
-        input_path / "episodes" / "episode_*"
-    ]
-    
-    for pattern in possible_patterns:
-        matching_dirs = list(glob.glob(str(pattern)))
-        if matching_dirs:
-            episode_dirs.extend([Path(d) for d in matching_dirs if Path(d).is_dir()])
-            break
-    
-    if not episode_dirs:
-        # If no episode directories found, create dummy data
-        print("⚠️  No episode directories found, creating dummy data for testing")
-        create_dummy_data(output_path, condition)
-        return
-    
-    episode_dirs = sorted(episode_dirs)
-    print(f"📁 Found {len(episode_dirs)} episodes")
-    
-    # Limit episodes based on data amount
-    if condition.data_amount == DataAmount.PERCENT_20:
-        max_episodes = int(len(episode_dirs) * 0.2)
-        episode_dirs = episode_dirs[:max_episodes]
-        print(f"📊 Using {max_episodes} episodes (20% of data)")
+    output_path.mkdir(parents=True, exist_ok=True)
     
     # Convert each episode
-    for i, episode_dir in enumerate(tqdm(episode_dirs, desc="Converting episodes")):
-        try:
-            convert_episode(episode_dir, output_path / f"episode_{i:04d}", condition)
-        except Exception as e:
-            print(f"❌ Failed to convert episode {episode_dir}: {e}")
-            continue
+    for episode_file in tqdm(episode_files, desc="Converting episodes"):
+        episode_num = episode_file.stem.replace('episode_', '')
+        output_episode_dir = output_path / f"episode_{episode_num}"
+        convert_episode(episode_file, output_episode_dir, condition)
     
-    print(f"✅ Conversion completed: {len(episode_dirs)} episodes converted")
+    print(f"✅ Conversion complete: {len(episode_files)} episodes converted")
 
 
-def convert_episode(episode_dir: Path, output_episode_dir: Path, condition: AblationCondition):
-    """Convert a single episode"""
+def convert_episode(episode_file: Path, output_episode_dir: Path, condition: AblationCondition):
+    """Convert a single episode from LeRobot to UniVLA format"""
     
-    os.makedirs(output_episode_dir, exist_ok=True)
+    output_episode_dir.mkdir(parents=True, exist_ok=True)
     
-    # Load episode data
-    try:
-        # Try to load from parquet files (LeRobot format)
-        data_files = list(episode_dir.glob("*.parquet"))
-        if data_files:
-            import pandas as pd
-            df = pd.read_parquet(data_files[0])
-            
-            # Extract states and actions
-            state_columns = [col for col in df.columns if 'state' in col.lower()]
-            action_columns = [col for col in df.columns if 'action' in col.lower()]
-            
-            if state_columns and action_columns:
-                states = df[state_columns].values
-                actions = df[action_columns].values
-            else:
-                # Create dummy data if columns not found
-                states = np.random.randn(100, 60)  # 60-dim state
-                actions = np.random.randn(100, 42)  # 42-dim action
+    # Load LeRobot episode data
+    print(f"Loading episode: {episode_file.name}")
+    
+    # Load episode data from parquet
+    df = pd.read_parquet(episode_file)
+    
+    # Get episode number for video file
+    episode_num = episode_file.stem  # e.g., "episode_000000"
+    
+    # Get video file path based on camera type
+    video_base_dir = episode_file.parent.parent.parent / "videos" / "chunk-000"
+    if condition.camera_type == CameraType.ROBOT_VIEW:
+        video_file = video_base_dir / "observation.images.robot0_robotview" / f"{episode_num}.mp4"
+    else:  # For other camera types, use robot view as default
+        video_file = video_base_dir / "observation.images.robot0_robotview" / f"{episode_num}.mp4"
+    
+    if not video_file.exists():
+        print(f"⚠️  Video file not found: {video_file}")
+        return
+    
+    # Get indices based on state type and action type
+    # Based on actual Allex robot structure from info.json:
+    # Position (0-59): torso(0-3) + head(4-5) + right_arm(6-12) + left_arm(13-19) + right_hand(20-39) + left_hand(40-59)
+    # Velocity (60-119): same structure with offset +60
+    # Torque (120-179): same structure with offset +120
+    
+    if condition.state_type == StateType.POSITION_ONLY:
+        # Position only: use indices 0-59
+        if condition.action_type == ActionType.RIGHT_ARM:
+            # torso(0-3) + head(4-5) + right_arm(6-12) + right_hand(20-39) = 33개
+            state_indices = list(range(0, 6)) + list(range(6, 13)) + list(range(20, 40))
+            # right end-effector(0-5) + right fingers(12-26) = 21개
+            action_indices = list(range(0, 6)) + list(range(12, 27))
+        else:  # DUAL_ARM
+            # All position indices: torso + head + both arms + both hands = 60개
+            state_indices = list(range(0, 60))
+            # All action indices: both arms + both hands = 42개
+            action_indices = list(range(42))
+    elif condition.state_type == StateType.POSITION_VELOCITY:
+        # Position + Velocity: use indices 0-119
+        if condition.action_type == ActionType.RIGHT_ARM:
+            # Position: torso(0-3) + head(4-5) + right_arm(6-12) + right_hand(20-39)
+            pos_indices = list(range(0, 6)) + list(range(6, 13)) + list(range(20, 40))
+            # Velocity: same structure with offset +60
+            vel_indices = [i + 60 for i in pos_indices]
+            state_indices = pos_indices + vel_indices
+            # right end-effector(0-5) + right fingers(12-26) = 21개
+            action_indices = list(range(0, 6)) + list(range(12, 27))
+        else:  # DUAL_ARM
+            # All position + velocity indices = 120개
+            state_indices = list(range(0, 120))
+            # All action indices = 42개
+            action_indices = list(range(42))
+    else:  # POSITION_VELOCITY_TORQUE
+        # Position + Velocity + Torque: use indices 0-179
+        if condition.action_type == ActionType.RIGHT_ARM:
+            # Position: torso(0-3) + head(4-5) + right_arm(6-12) + right_hand(20-39)
+            pos_indices = list(range(0, 6)) + list(range(6, 13)) + list(range(20, 40))
+            # Velocity: same structure with offset +60
+            vel_indices = [i + 60 for i in pos_indices]
+            # Torque: same structure with offset +120
+            torque_indices = [i + 120 for i in pos_indices]
+            state_indices = pos_indices + vel_indices + torque_indices
+            # right end-effector(0-5) + right fingers(12-26) = 21개
+            action_indices = list(range(0, 6)) + list(range(12, 27))
+        else:  # DUAL_ARM
+            # All position + velocity + torque indices = 180개
+            state_indices = list(range(0, 180))
+            # All action indices = 42개
+            action_indices = list(range(42))
+    
+    state_dim = len(state_indices)
+    action_dim = len(action_indices)
+    
+    print(f"  State dim: {state_dim}, Action dim: {action_dim}")
+    
+    # Extract and process data
+    timesteps = len(df)
+    
+    # Load video and extract frames
+    cap = cv2.VideoCapture(str(video_file))
+    
+    # Initialize arrays
+    states = np.zeros((timesteps, state_dim))
+    actions = np.zeros((timesteps, action_dim))
+    images = []
+    
+    # Extract frames from video
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if frame_count != timesteps:
+        print(f"⚠️  Frame count mismatch: video has {frame_count} frames, data has {timesteps} timesteps")
+    
+    # Process each timestep
+    for i in range(timesteps):
+        row = df.iloc[i]
+        
+        # Extract state from observation
+        obs_state = np.array(row['observation.state'])
+        states[i] = obs_state[state_indices]
+        
+        # Extract action
+        action = np.array(row['action'])
+        actions[i] = action[action_indices]
+        
+        # Extract frame from video
+        ret, frame = cap.read()
+        if ret:
+            # Convert BGR to RGB (OpenCV uses BGR, but we want RGB)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            images.append(frame_rgb)
         else:
-            # Create dummy data if no parquet files
-            # Make sure to create enough dimensions for all possible indices
-            states = np.random.randn(100, 180)  # 60 position + 60 velocity + 60 torque
-            actions = np.random.randn(100, 42)
-            
-    except Exception as e:
-        print(f"⚠️  Could not load episode data, creating dummy data: {e}")
-        # Make sure to create enough dimensions for all possible indices
-        states = np.random.randn(100, 180)  # 60 position + 60 velocity + 60 torque
-        actions = np.random.randn(100, 42)
+            # If no more frames, use the last available frame
+            if images:
+                images.append(images[-1])
+            else:
+                # Create a dummy frame if no frames available
+                images.append(np.zeros((224, 224, 3), dtype=np.uint8))
     
-    # Apply state and action filtering based on condition
-    state_config = condition.get_state_config()
+    cap.release()
     
-    # Get indices based on action type
-    if condition.action_type == ActionType.SINGLE_ARM:
-        # Torso + right arm + right hand
-        state_indices = list(range(0, 3)) + list(range(5, 12)) + list(range(19, 40))
-        action_indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-    else:  # BIMANUAL
-        # Torso + both arms + both hands
-        state_indices = list(range(0, 3)) + list(range(5, 19)) + list(range(19, 60))
-        action_indices = list(range(42))
+    # Save converted data
+    np.save(output_episode_dir / "state.npy", states)
+    np.save(output_episode_dir / "action.npy", actions)
     
-    # Add velocity and torque if full state
-    if condition.state_type == StateType.FULL_STATE:
-        velocity_indices = [i + 60 for i in state_indices]
-        torque_indices = [i + 120 for i in state_indices]
-        state_indices.extend(velocity_indices)
-        state_indices.extend(torque_indices)
+    # Save images as PNG files
+    image_dir = output_episode_dir / "images"
+    image_dir.mkdir(exist_ok=True)
     
-    # Filter states and actions
-    if len(state_indices) > 0 and states.shape[1] > max(state_indices):
-        filtered_states = states[:, state_indices]
-    else:
-        # Create appropriate size dummy data with correct dimensions
-        print(f"⚠️  State data shape {states.shape} insufficient for indices {state_indices}")
-        print(f"Creating dummy state data with {len(state_indices)} dimensions")
-        filtered_states = np.random.randn(states.shape[0], len(state_indices) if state_indices else 32)
+    for i, image in enumerate(images):
+        cv2.imwrite(str(image_dir / f"{i:06d}.png"), cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
     
-    if len(action_indices) > 0 and actions.shape[1] > max(action_indices):
-        filtered_actions = actions[:, action_indices]
-    else:
-        # Create appropriate size dummy data
-        print(f"⚠️  Action data shape {actions.shape} insufficient for indices {action_indices}")
-        print(f"Creating dummy action data with {len(action_indices)} dimensions")
-        filtered_actions = np.random.randn(actions.shape[0], len(action_indices) if action_indices else condition.get_action_dim())
-    
-    # Save filtered data
-    np.save(output_episode_dir / "state.npy", filtered_states)
-    np.save(output_episode_dir / "action.npy", filtered_actions)
-    
-    # Create images
-    num_frames = len(filtered_states)
-    for frame_idx in range(num_frames):
-        # Create dummy image (you would replace this with actual image extraction)
-        dummy_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
-        cv2.imwrite(str(output_episode_dir / f"frame_{frame_idx + 1:03d}.png"), dummy_image)
-    
-    # Create instruction file
-    instruction = get_instruction_for_condition(condition)
-    with open(output_episode_dir / "instruction.txt", "w") as f:
-        f.write(instruction)
+    print(f"  ✓ Converted episode {episode_file.name}: {timesteps} timesteps")
 
 
 def create_dummy_data(output_path: Path, condition: AblationCondition):
@@ -177,90 +235,91 @@ def create_dummy_data(output_path: Path, condition: AblationCondition):
     # Get dimensions based on condition
     state_config = condition.get_state_config()
     
-    if condition.action_type == ActionType.SINGLE_ARM:
-        state_indices = list(range(0, 3)) + list(range(5, 12)) + list(range(19, 40))
-        action_indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-    else:
-        state_indices = list(range(0, 3)) + list(range(5, 19)) + list(range(19, 60))
-        action_indices = list(range(42))
-    
-    if condition.state_type == StateType.FULL_STATE:
-        velocity_indices = [i + 60 for i in state_indices]
-        torque_indices = [i + 120 for i in state_indices]
-        state_indices.extend(velocity_indices)
-        state_indices.extend(torque_indices)
+    if condition.state_type == StateType.POSITION_ONLY:
+        # Position only: use indices 0-59 (currently available)
+        if condition.action_type == ActionType.RIGHT_ARM:
+            state_indices = list(range(0, 6)) + list(range(6, 13)) + list(range(20, 40))
+            action_indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+        else:
+            state_indices = list(range(0, 60))  # All position indices
+            action_indices = list(range(42))
+    elif condition.state_type == StateType.POSITION_VELOCITY:
+        # Position + Velocity: use indices 0-119 (when available)
+        if condition.action_type == ActionType.RIGHT_ARM:
+            pos_indices = list(range(0, 6)) + list(range(6, 13)) + list(range(20, 40))
+            vel_indices = list(range(60, 66)) + list(range(66, 73)) + list(range(80, 100))
+            state_indices = pos_indices + vel_indices
+            action_indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+        else:
+            state_indices = list(range(0, 60)) + list(range(60, 120))  # 120개
+            action_indices = list(range(42))
+    else:  # POSITION_VELOCITY_TORQUE
+        # Position + Velocity + Torque: use indices 0-179 (when available)
+        if condition.action_type == ActionType.RIGHT_ARM:
+            pos_indices = list(range(0, 6)) + list(range(6, 13)) + list(range(20, 40))
+            vel_indices = list(range(60, 66)) + list(range(66, 73)) + list(range(80, 100))
+            torque_indices = list(range(120, 126)) + list(range(126, 133)) + list(range(140, 160))
+            state_indices = pos_indices + vel_indices + torque_indices
+            action_indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+        else:
+            state_indices = list(range(0, 180))  # 180개
+            action_indices = list(range(42))
     
     state_dim = len(state_indices)
     action_dim = len(action_indices)
     
-    # Create multiple dummy episodes
-    num_episodes = 20 if condition.data_amount == DataAmount.PERCENT_100 else 4
+    # Create multiple dummy episodes based on data amount
+    base_episodes = 20  # Base number for 100%
+    num_episodes = max(1, int(base_episodes * condition.data_amount / 100))
     
     for episode_idx in range(num_episodes):
-        episode_dir = output_path / f"episode_{episode_idx:04d}"
-        os.makedirs(episode_dir, exist_ok=True)
+        episode_dir = output_path / f"episode_{episode_idx:06d}"
+        episode_dir.mkdir(parents=True, exist_ok=True)
         
-        # Random episode length
-        episode_length = np.random.randint(50, 150)
+        # Create dummy data for this episode
+        timesteps = 50  # Fixed number of timesteps per episode
         
-        # Generate random states and actions with proper dimensions
-        # Create full 180-dim state data first, then filter
-        full_states = np.random.randn(episode_length, 180) * 0.1  # 60 pos + 60 vel + 60 torque
-        full_actions = np.random.randn(episode_length, 42) * 0.1
-        
-        # Filter to get the desired dimensions
-        states = full_states[:, state_indices] if state_indices else full_states[:, :state_dim]
-        actions = full_actions[:, action_indices] if action_indices else full_actions[:, :action_dim]
-        
-        # Add some structure to the data
-        for t in range(1, episode_length):
-            states[t] = states[t-1] + np.random.randn(state_dim) * 0.01
-            actions[t] = actions[t-1] + np.random.randn(action_dim) * 0.01
+        # Random states and actions
+        np.random.seed(42 + episode_idx)  # Different seed per episode
+        states = np.random.randn(timesteps, state_dim) * 0.1
+        actions = np.random.randn(timesteps, action_dim) * 0.1
         
         # Save data
         np.save(episode_dir / "state.npy", states)
         np.save(episode_dir / "action.npy", actions)
         
         # Create dummy images
-        for frame_idx in range(episode_length):
-            # Create a simple colored image
-            color = np.random.randint(0, 255, 3)
-            dummy_image = np.full((224, 224, 3), color, dtype=np.uint8)
-            # Add some noise
-            noise = np.random.randint(-50, 50, (224, 224, 3))
-            dummy_image = np.clip(dummy_image.astype(int) + noise, 0, 255).astype(np.uint8)
-            cv2.imwrite(str(episode_dir / f"frame_{frame_idx + 1:03d}.png"), dummy_image)
+        image_dir = episode_dir / "images"
+        image_dir.mkdir(exist_ok=True)
         
-        # Create instruction
-        instruction = get_instruction_for_condition(condition)
-        with open(episode_dir / "instruction.txt", "w") as f:
-            f.write(instruction)
+        dummy_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        for i in range(timesteps):
+            cv2.imwrite(str(image_dir / f"{i:06d}.png"), dummy_image)
     
-    print(f"✅ Created {num_episodes} dummy episodes")
+    print(f"🎭 Created {num_episodes} dummy episodes with {timesteps} timesteps each")
 
 
-def get_instruction_for_condition(condition: AblationCondition) -> str:
-    """Generate appropriate instruction based on condition"""
+def generate_instructions(condition: AblationCondition) -> List[str]:
+    """Generate instruction prompts based on condition"""
     
     base_instructions = [
-        "pick up the cube",
-        "place the cube in the container",
-        "manipulate the object",
-        "move the cube to the target location",
-        "grasp and lift the object"
+        "Use the robot to pick up the object",
+        "Move the object to the target location", 
+        "Manipulate the target object carefully",
+        "Execute the manipulation task precisely",
+        "Complete the robotic manipulation sequence"
     ]
     
-    if condition.action_type == ActionType.BIMANUAL:
-        bimanual_instructions = [
-            "use both hands to manipulate the object",
-            "coordinate both arms to move the cube",
-            "bimanual manipulation of the target object"
+    # Add dual-arm specific instructions
+    if condition.action_type == ActionType.DUAL_ARM:
+        dual_arm_instructions = [
+            "Coordinate both arms to manipulate the object",
+            "Use both left and right arms for the task",
+            "dual-arm manipulation of the target object"
         ]
-        base_instructions.extend(bimanual_instructions)
+        base_instructions.extend(dual_arm_instructions)
     
-    # Select instruction based on hash of condition name for consistency
-    instruction_idx = hash(condition.name) % len(base_instructions)
-    return base_instructions[instruction_idx]
+    return base_instructions
 
 
 def main():
@@ -268,10 +327,10 @@ def main():
     parser.add_argument("--condition", type=str, required=True, 
                        help="Ablation condition name")
     parser.add_argument("--input-dir", type=str, 
-                       default="/home/david/.cache/huggingface/lerobot/RLWRLD/allex_cube",
+                       default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq",
                        help="Input directory path")
     parser.add_argument("--output-dir", type=str,
-                       default="./converted_data",
+                       default="./univla/converted_data",
                        help="Output directory path")
     
     args = parser.parse_args()
@@ -287,7 +346,7 @@ def main():
     print(f"📁 Output: {args.output_dir}")
     print(f"📊 Condition details:")
     print(f"   - Model: {condition.model_type.value}")
-    print(f"   - Data: {'20%' if condition.data_amount.value == '20_percent' else '100%'}")
+    print(f"   - Data: {condition.data_amount}%")
     print(f"   - State: {condition.state_type.value}")
     print(f"   - Action: {condition.action_type.value}")
     print(f"   - Camera: {condition.camera_type.value}")

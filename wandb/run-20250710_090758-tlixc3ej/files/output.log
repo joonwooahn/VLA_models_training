@@ -1,0 +1,138 @@
+  0%|          | 0/10000 [00:00<?, ?it/s]/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/action_head/cross_attention_dit.py:281: FutureWarning: Accessing config attribute `interleave_self_attention` directly via 'DiT' object attribute is deprecated. Please access 'interleave_self_attention' over 'DiT's config object instead, e.g. 'unet.config.interleave_self_attention'.
+  if idx % 2 == 1 and self.interleave_self_attention:
+Could not estimate the number of tokens of the input, floating-point operations will not be computed
+                                                     
+{'loss': 6.607, 'grad_norm': 3.348367929458618, 'learning_rate': 1.8e-06, 'epoch': 0.0}
+{'loss': 9.712, 'grad_norm': 10.945279121398926, 'learning_rate': 3.8e-06, 'epoch': 0.01}
+{'loss': 12.216, 'grad_norm': 5.956536769866943, 'learning_rate': 5.8e-06, 'epoch': 0.01}
+{'loss': 11.4811, 'grad_norm': 8.611726760864258, 'learning_rate': 7.8e-06, 'epoch': 0.01}
+{'loss': 10.8767, 'grad_norm': 9.886198043823242, 'learning_rate': 9.800000000000001e-06, 'epoch': 0.02}
+{'loss': 9.8635, 'grad_norm': 15.247058868408203, 'learning_rate': 1.18e-05, 'epoch': 0.02}
+{'loss': 9.0991, 'grad_norm': 21.995319366455078, 'learning_rate': 1.3800000000000002e-05, 'epoch': 0.02}
+{'loss': 8.3989, 'grad_norm': 30.528636932373047, 'learning_rate': 1.58e-05, 'epoch': 0.03}
+{'loss': 9.3823, 'grad_norm': 15.823575019836426, 'learning_rate': 1.78e-05, 'epoch': 0.03}
+{'loss': 5.8478, 'grad_norm': 24.772703170776367, 'learning_rate': 1.9800000000000004e-05, 'epoch': 0.03}
+{'loss': 4.6871, 'grad_norm': 13.879854202270508, 'learning_rate': 2.18e-05, 'epoch': 0.04}
+{'loss': 4.6043, 'grad_norm': 20.3000545501709, 'learning_rate': 2.38e-05, 'epoch': 0.04}
+{'loss': 3.8036, 'grad_norm': 38.17752456665039, 'learning_rate': 2.58e-05, 'epoch': 0.04}
+{'loss': 3.4949, 'grad_norm': 17.873287200927734, 'learning_rate': 2.7800000000000005e-05, 'epoch': 0.05}
+{'loss': 3.792, 'grad_norm': 32.37388610839844, 'learning_rate': 2.98e-05, 'epoch': 0.05}
+{'loss': 3.297, 'grad_norm': 75.0779037475586, 'learning_rate': 3.18e-05, 'epoch': 0.05}
+{'loss': 3.0993, 'grad_norm': 74.80003356933594, 'learning_rate': 3.38e-05, 'epoch': 0.06}
+{'loss': 2.6498, 'grad_norm': 20.185203552246094, 'learning_rate': 3.58e-05, 'epoch': 0.06}
+{'loss': 3.4559, 'grad_norm': 12.945418357849121, 'learning_rate': 3.7800000000000004e-05, 'epoch': 0.06}
+{'loss': 3.1377, 'grad_norm': 20.561614990234375, 'learning_rate': 3.9800000000000005e-05, 'epoch': 0.07}
+{'loss': 2.9332, 'grad_norm': 12.46787166595459, 'learning_rate': 4.18e-05, 'epoch': 0.07}
+{'loss': 3.2992, 'grad_norm': 38.998809814453125, 'learning_rate': 4.38e-05, 'epoch': 0.07}
+{'loss': 2.9312, 'grad_norm': 34.18130111694336, 'learning_rate': 4.58e-05, 'epoch': 0.08}
+{'loss': 2.7121, 'grad_norm': 29.94258689880371, 'learning_rate': 4.78e-05, 'epoch': 0.08}
+{'loss': 3.0352, 'grad_norm': 37.233909606933594, 'learning_rate': 4.9800000000000004e-05, 'epoch': 0.08}
+{'loss': 3.2428, 'grad_norm': 12.045637130737305, 'learning_rate': 5.1800000000000005e-05, 'epoch': 0.09}
+{'loss': 2.6822, 'grad_norm': 8.115736961364746, 'learning_rate': 5.380000000000001e-05, 'epoch': 0.09}
+{'loss': 2.8116, 'grad_norm': 23.169782638549805, 'learning_rate': 5.580000000000001e-05, 'epoch': 0.09}
+{'loss': 2.3919, 'grad_norm': 25.999229431152344, 'learning_rate': 5.7799999999999995e-05, 'epoch': 0.1}
+{'loss': 2.2364, 'grad_norm': 18.721145629882812, 'learning_rate': 5.9800000000000003e-05, 'epoch': 0.1}
+{'loss': 2.1224, 'grad_norm': 20.85385513305664, 'learning_rate': 6.18e-05, 'epoch': 0.1}
+{'loss': 2.2117, 'grad_norm': 14.35414981842041, 'learning_rate': 6.38e-05, 'epoch': 0.1}
+{'loss': 2.6883, 'grad_norm': 183.92938232421875, 'learning_rate': 6.58e-05, 'epoch': 0.11}
+{'loss': 2.2961, 'grad_norm': 9.33692741394043, 'learning_rate': 6.780000000000001e-05, 'epoch': 0.11}
+{'loss': 2.4225, 'grad_norm': 18.422653198242188, 'learning_rate': 6.98e-05, 'epoch': 0.11}
+{'loss': 2.4381, 'grad_norm': 12.78908920288086, 'learning_rate': 7.18e-05, 'epoch': 0.12}
+{'loss': 2.3615, 'grad_norm': 13.597545623779297, 'learning_rate': 7.38e-05, 'epoch': 0.12}
+{'loss': 2.3322, 'grad_norm': 12.043596267700195, 'learning_rate': 7.58e-05, 'epoch': 0.12}
+{'loss': 2.465, 'grad_norm': 6.630439281463623, 'learning_rate': 7.780000000000001e-05, 'epoch': 0.13}
+{'loss': 2.5862, 'grad_norm': 29.543437957763672, 'learning_rate': 7.98e-05, 'epoch': 0.13}
+{'loss': 2.1101, 'grad_norm': 25.26548194885254, 'learning_rate': 8.18e-05, 'epoch': 0.13}
+{'loss': 2.0315, 'grad_norm': 15.127236366271973, 'learning_rate': 8.38e-05, 'epoch': 0.14}
+{'loss': 2.0353, 'grad_norm': 19.59064292907715, 'learning_rate': 8.58e-05, 'epoch': 0.14}
+{'loss': 2.0226, 'grad_norm': 20.303056716918945, 'learning_rate': 8.78e-05, 'epoch': 0.14}
+{'loss': 1.8135, 'grad_norm': 16.757160186767578, 'learning_rate': 8.98e-05, 'epoch': 0.15}
+{'loss': 1.9485, 'grad_norm': 27.238040924072266, 'learning_rate': 9.180000000000001e-05, 'epoch': 0.15}
+{'loss': 2.0094, 'grad_norm': 10.290499687194824, 'learning_rate': 9.38e-05, 'epoch': 0.15}
+{'loss': 1.8109, 'grad_norm': 12.537384033203125, 'learning_rate': 9.58e-05, 'epoch': 0.16}
+{'loss': 2.183, 'grad_norm': 10.614411354064941, 'learning_rate': 9.78e-05, 'epoch': 0.16}
+{'loss': 2.121, 'grad_norm': 13.053549766540527, 'learning_rate': 9.98e-05, 'epoch': 0.16}
+{'loss': 2.1663, 'grad_norm': 18.54602813720703, 'learning_rate': 9.9999778549206e-05, 'epoch': 0.17}
+{'loss': 1.7849, 'grad_norm': 7.186718940734863, 'learning_rate': 9.999901304280685e-05, 'epoch': 0.17}
+{'loss': 1.7296, 'grad_norm': 9.859469413757324, 'learning_rate': 9.999770075521164e-05, 'epoch': 0.17}
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/scripts/gr00t_finetune.py", line 296, in <module>
+    main(config)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/scripts/gr00t_finetune.py", line 268, in main
+    experiment.train()
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/runner.py", line 171, in train
+    self.trainer.train(resume_from_checkpoint=self.resume_from_checkpoint)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/trainer.py", line 153, in train
+    return super().train(resume_from_checkpoint, trial, ignore_keys_for_eval, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 2560, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 3736, in training_step
+    loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/trainer.py", line 75, in compute_loss
+    outputs = model(inputs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/accelerate/utils/operations.py", line 823, in forward
+    return model_forward(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/accelerate/utils/operations.py", line 811, in __call__
+    return convert_to_fp32(self.model_forward(*args, **kwargs))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/amp/autocast_mode.py", line 44, in decorate_autocast
+    return func(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/gr00t_n1.py", line 167, in forward
+    backbone_outputs = self.backbone(backbone_inputs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/backbone/eagle_backbone.py", line 125, in forward
+    eagle_embeds, eagle_mask = self.forward_eagle(vl_input)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/backbone/eagle_backbone.py", line 116, in forward_eagle
+    eagle_output = self.eagle_model(**eagle_input, output_hidden_states=True, return_dict=True)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/.cache/huggingface/modules/transformers_modules/eagle2_hg_model/modeling_eagle2_5_vl.py", line 261, in forward
+    outputs = self.language_model(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/utils/generic.py", line 965, in wrapper
+    output = func(self, *args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/utils/deprecation.py", line 172, in wrapped_func
+    return func(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 850, in forward
+    outputs: BaseModelOutputWithPast = self.model(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/utils/generic.py", line 965, in wrapper
+    output = func(self, *args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 576, in forward
+    layer_outputs = decoder_layer(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 289, in forward
+    hidden_states, self_attn_weights = self.self_attn(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/models/qwen3/modeling_qwen3.py", line 239, in forward
+    attn_output, attn_weights = attention_interface(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/integrations/flash_attention.py", line 49, in flash_attention_forward
+    attn_output = _flash_attention_forward(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/modeling_flash_attention_utils.py", line 353, in _flash_attention_forward
+    query_states, key_states, value_states, indices_q, cu_seq_lens, max_seq_lens = _upad_input(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/modeling_flash_attention_utils.py", line 150, in _upad_input
+    indices_k, cu_seqlens_k, max_seqlen_in_batch_k = _get_unpad_data(attention_mask)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/modeling_flash_attention_utils.py", line 101, in _get_unpad_data
+    indices = torch.nonzero(attention_mask.flatten(), as_tuple=False).flatten()
+KeyboardInterrupt

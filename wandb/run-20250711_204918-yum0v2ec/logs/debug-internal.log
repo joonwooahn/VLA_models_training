@@ -1,0 +1,18 @@
+{"time":"2025-07-11T20:49:18.646318509+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-11T20:49:18.646331844+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250711_204918-yum0v2ec/logs/debug-core.log"}
+{"time":"2025-07-11T20:49:18.653915255+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-11T20:49:18.653920905+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250711_204918-yum0v2ec/logs/debug-core.log"}
+{"time":"2025-07-11T20:49:19.280222893+09:00","level":"INFO","msg":"created new stream","id":"yum0v2ec"}
+{"time":"2025-07-11T20:49:19.28025809+09:00","level":"INFO","msg":"stream: started","id":"yum0v2ec"}
+{"time":"2025-07-11T20:49:19.280276555+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"yum0v2ec"}}
+{"time":"2025-07-11T20:49:19.280285382+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"yum0v2ec"}}
+{"time":"2025-07-11T20:49:19.280271876+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"yum0v2ec"}}
+{"time":"2025-07-11T20:49:20.191105511+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-11T20:49:20.221114948+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-11T21:21:53.443578507+09:00","level":"INFO","msg":"stream: closing","id":"yum0v2ec"}
+{"time":"2025-07-11T21:21:53.443726157+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-11T21:21:53.448127956+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-11T21:21:55.073655351+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"yum0v2ec"}}
+{"time":"2025-07-11T21:21:55.073743008+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"yum0v2ec"}}
+{"time":"2025-07-11T21:21:55.073745002+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"yum0v2ec"}}
+{"time":"2025-07-11T21:21:55.075239209+09:00","level":"INFO","msg":"stream: closed","id":"yum0v2ec"}

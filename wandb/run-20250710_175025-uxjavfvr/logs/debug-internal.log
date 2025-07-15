@@ -1,0 +1,18 @@
+{"time":"2025-07-10T17:50:25.450558797+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-10T17:50:25.450569679+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250710_175025-uxjavfvr/logs/debug-core.log"}
+{"time":"2025-07-10T17:50:25.45160205+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-10T17:50:25.451605988+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250710_175025-uxjavfvr/logs/debug-core.log"}
+{"time":"2025-07-10T17:50:25.45868561+09:00","level":"INFO","msg":"created new stream","id":"uxjavfvr"}
+{"time":"2025-07-10T17:50:25.458701641+09:00","level":"INFO","msg":"stream: started","id":"uxjavfvr"}
+{"time":"2025-07-10T17:50:25.458711551+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"uxjavfvr"}}
+{"time":"2025-07-10T17:50:25.458723023+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"uxjavfvr"}}
+{"time":"2025-07-10T17:50:25.458724065+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"uxjavfvr"}}
+{"time":"2025-07-10T17:50:25.828107075+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-10T17:50:25.831643239+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-10T18:48:01.871936296+09:00","level":"INFO","msg":"stream: closing","id":"uxjavfvr"}
+{"time":"2025-07-10T18:48:01.872036773+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-10T18:48:01.881655317+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-10T18:48:04.080098155+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"uxjavfvr"}}
+{"time":"2025-07-10T18:48:04.080139296+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"uxjavfvr"}}
+{"time":"2025-07-10T18:48:04.080179945+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"uxjavfvr"}}
+{"time":"2025-07-10T18:48:04.082796098+09:00","level":"INFO","msg":"stream: closed","id":"uxjavfvr"}

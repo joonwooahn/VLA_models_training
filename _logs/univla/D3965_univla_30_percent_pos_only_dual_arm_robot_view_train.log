@@ -1,0 +1,11 @@
+Name: univla_30_percent_pos_only_dual_arm_robot_view_train
+Command: bash -c source ~/miniconda3/etc/profile.d/conda.sh && conda activate univla_train && python univla/vla_scripts/finetune_rlwrld_ablation.py --condition univla_30_percent_pos_only_dual_arm_robot_view --data-root-dir ./univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view --output-dir ./univla/outputs/job_D2459_univla_univla_30_percent_pos_only_dual_arm_robot_view --max-steps 5000 --batch-size 16 --save-steps 1000
+Return code: 1
+Stdout:
+
+Stderr:
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 25, in <module>
+    from accelerate import PartialState, Accelerator, DistributedDataParallelKwargs
+ModuleNotFoundError: No module named 'accelerate'
+

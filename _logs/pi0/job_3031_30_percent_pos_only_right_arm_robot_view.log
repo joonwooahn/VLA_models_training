@@ -1,0 +1,80 @@
+=== UNIFIED LOG FOR 30_PERCENT_POS_ONLY_RIGHT_ARM_ROBOT_VIEW ===
+Generated at: Tue Jul 15 08:37:07 KST 2025
+Job ID: 3031
+
+==================================================
+ENVIRONMENT CHECK
+==================================================
+Available conda environments:
+
+# conda environments:
+#
+base                 * /virtual_lab/rlwrld/david/miniconda3
+conversion_env         /virtual_lab/rlwrld/david/miniconda3/envs/conversion_env
+gr00t                  /virtual_lab/rlwrld/david/miniconda3/envs/gr00t
+lerobot                /virtual_lab/rlwrld/david/miniconda3/envs/lerobot
+openpi_env             /virtual_lab/rlwrld/david/miniconda3/envs/openpi_env
+univla_train           /virtual_lab/rlwrld/david/miniconda3/envs/univla_train
+
+
+Activating lerobot environment...
+
+Current Python path:
+/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/bin/python
+
+Python version:
+Python 3.13.5
+
+Checking transformers installation...
+transformers version: 4.51.3
+==================================================
+
+==================================================
+STEP 1: DATA PREPARATION (Already available)
+==================================================
+Data source: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq
+Dataset: 30_percent_pos_only_right_arm_robot_view
+Status: ✅ SUCCESS (Data already available)
+
+==================================================
+STEP 2: TRAINING
+==================================================
+Command: python pi0/lerobot/scripts/train.py --dataset.root=/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/converted_datasets_ablation/30_percent_pos_only_right_arm_robot_view --policy.path=lerobot/pi0 --output_dir=./pi0/outputs/job_3031_pi0_30_percent_pos_only_right_arm_robot_view --steps=5000 --batch_size=24 --seed=1000 --save_freq=1000 --num_workers=8
+Starting training...
+
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/scripts/train.py", line 288, in <module>
+    train()
+    ~~~~~^^
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/configs/parser.py", line 225, in wrapper_inner
+    cfg = draccus.parse(config_class=argtype, config_path=config_path, args=cli_args)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/argparsing.py", line 211, in parse
+    return parser.parse_args(args)
+           ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/argparsing.py", line 102, in parse_args
+    args, _ = self.parse_known_args(args, namespace, is_parse_args=True)
+              ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/argparsing.py", line 136, in parse_known_args
+    parsed_t = self._postprocessing(parsed_args)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/argparsing.py", line 180, in _postprocessing
+    cfg = decoding.decode(self.config_class, deflat_d)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/parsers/registry_utils.py", line 78, in wrapper
+    return base_func(*args, **kw)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/parsers/decoding.py", line 48, in decode
+    return get_decoding_fn(cls)(raw_value, ())  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/parsers/decoding.py", line 135, in decode_dataclass
+    raise e
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/parsers/decoding.py", line 133, in decode_dataclass
+    field_value = get_decoding_fn(field_type)(raw_value, (*path, name))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/draccus/parsers/decoding.py", line 157, in decode_dataclass
+    raise DecodingError(path, f"Missing required field(s) {formatted_keys} for {stringify_type(cls)}")
+draccus.utils.DecodingError: `dataset`: Missing required field(s) `repo_id` for DatasetConfig
+
+==================================================
+SUMMARY
+==================================================
+Data preparation: ✅ SUCCESS
+Training: ❌ FAILED
+Overall: ❌ FAILED
+==================================================

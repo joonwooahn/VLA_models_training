@@ -1,0 +1,18 @@
+{"time":"2025-07-09T17:54:31.892091088+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T17:54:31.892104578+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_175431-m86znti4/logs/debug-core.log"}
+{"time":"2025-07-09T17:54:31.893315622+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T17:54:31.893327811+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_175431-m86znti4/logs/debug-core.log"}
+{"time":"2025-07-09T17:54:31.906009404+09:00","level":"INFO","msg":"created new stream","id":"m86znti4"}
+{"time":"2025-07-09T17:54:31.906033285+09:00","level":"INFO","msg":"stream: started","id":"m86znti4"}
+{"time":"2025-07-09T17:54:31.906050151+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"m86znti4"}}
+{"time":"2025-07-09T17:54:31.906070056+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"m86znti4"}}
+{"time":"2025-07-09T17:54:31.906050004+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"m86znti4"}}
+{"time":"2025-07-09T17:54:32.38770712+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-09T17:54:32.398653431+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T17:54:34.634943134+09:00","level":"INFO","msg":"stream: closing","id":"m86znti4"}
+{"time":"2025-07-09T17:54:34.634967038+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T17:54:34.635166472+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-09T17:54:37.665145315+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"m86znti4"}}
+{"time":"2025-07-09T17:54:37.66517461+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"m86znti4"}}
+{"time":"2025-07-09T17:54:37.66520012+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"m86znti4"}}
+{"time":"2025-07-09T17:54:37.666339309+09:00","level":"INFO","msg":"stream: closed","id":"m86znti4"}

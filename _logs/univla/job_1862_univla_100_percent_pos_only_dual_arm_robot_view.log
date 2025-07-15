@@ -1,0 +1,118 @@
+=== UNIFIED LOG FOR UNIVLA_100_PERCENT_POS_ONLY_DUAL_ARM_ROBOT_VIEW ===
+Generated at: Sat Jul 12 06:48:46 KST 2025
+Job ID: 1862
+
+==================================================
+STEP 1: DATA CONVERSION
+==================================================
+Command: python univla/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py --condition univla_100_percent_pos_only_dual_arm_robot_view --input-dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq --output-dir ./univla/converted_data
+Starting data conversion...
+
+✅ Data conversion for condition: univla_100_percent_pos_only_dual_arm_robot_view
+📂 Input: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq
+📁 Output: ./univla/converted_data
+📊 Condition details:
+   - Model: univla
+   - Data: 100%
+   - State: pos_only
+   - Action: dual_arm
+   - Camera: robot_view
+   - Action dim: 42
+🔍 Found existing converted data at: univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view
+📂 220 episodes already converted
+✅ Skipping conversion (data already exists)
+🎉 Data conversion completed successfully!
+✅ Data conversion completed successfully
+Data directory: ./univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view
+
+==================================================
+STEP 2: TRAINING
+==================================================
+Command: python univla/vla_scripts/finetune_rlwrld_ablation.py --condition univla_100_percent_pos_only_dual_arm_robot_view --data-root-dir ./univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view --output-dir ./univla/outputs/job_1862_univla_univla_100_percent_pos_only_dual_arm_robot_view --max-steps 10000 --batch-size 16 --save-steps 5000
+Starting training...
+
+2025-07-12 06:48:54.400071: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2025-07-12 06:48:54.400167: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2025-07-12 06:48:54.401221: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-07-12 06:48:55.867065: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+✅ Starting training for condition: univla_100_percent_pos_only_dual_arm_robot_view
+📂 Data: ./univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view
+📁 Output: ./univla/outputs/job_1862_univla_univla_100_percent_pos_only_dual_arm_robot_view
+🔢 Steps: 10000
+📊 Batch size: 16
+📈 Learning rate: 0.0001
+🚀 Starting UniVLA training for condition: univla_100_percent_pos_only_dual_arm_robot_view
+📊 Condition config: state_dim=60, action_dim=42, name=univla_100_percent_pos_only_dual_arm_robot_view
+🔄 Loading model and processor...
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:00<00:00,  3.09it/s]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:00<00:00,  3.66it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  3.99it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  3.82it/s]
+Using cache found in /virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main
+/virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+/virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+/virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+trainable params: 110,828,288 || all params: 7,652,065,472 || trainable%: 1.4483
+📈 Total Trainable Params: 124,236,024
+🔄 Loading Latent Action Model...
+07/12 [06:49:19] INFO     | >> using MLP layer as FFN  vision_transformer.py:123
+📂 Loading training data...
+Calculating normalization stats from 220 episodes...
+  0%|          | 0/220 [00:00<?, ?it/s]  1%|          | 2/220 [00:00<00:16, 13.36it/s]  2%|▏         | 5/220 [00:00<00:12, 17.28it/s]  3%|▎         | 7/220 [00:00<00:12, 17.45it/s]  4%|▍         | 9/220 [00:00<00:11, 18.20it/s]  5%|▌         | 12/220 [00:00<00:10, 19.93it/s]  6%|▋         | 14/220 [00:00<00:11, 18.55it/s]  7%|▋         | 16/220 [00:00<00:11, 17.93it/s]  9%|▊         | 19/220 [00:01<00:10, 20.09it/s] 10%|█         | 22/220 [00:01<00:10, 18.48it/s] 11%|█▏        | 25/220 [00:01<00:10, 19.11it/s] 12%|█▏        | 27/220 [00:01<00:10, 17.83it/s] 14%|█▎        | 30/220 [00:01<00:09, 19.35it/s] 15%|█▌        | 33/220 [00:01<00:08, 20.96it/s] 16%|█▋        | 36/220 [00:01<00:09, 20.29it/s] 18%|█▊        | 40/220 [00:02<00:07, 22.91it/s] 20%|█▉        | 43/220 [00:02<00:07, 23.97it/s] 21%|██        | 46/220 [00:02<00:06, 24.98it/s] 22%|██▏       | 49/220 [00:02<00:07, 22.36it/s] 24%|██▍       | 53/220 [00:02<00:06, 25.20it/s] 25%|██▌       | 56/220 [00:02<00:06, 25.02it/s] 27%|██▋       | 60/220 [00:02<00:06, 25.60it/s] 29%|██▊       | 63/220 [00:02<00:06, 24.24it/s] 30%|███       | 66/220 [00:03<00:06, 24.55it/s] 31%|███▏      | 69/220 [00:03<00:07, 20.73it/s] 33%|███▎      | 72/220 [00:03<00:07, 18.97it/s] 34%|███▎      | 74/220 [00:03<00:07, 19.05it/s] 35%|███▍      | 76/220 [00:03<00:07, 18.55it/s] 36%|███▌      | 79/220 [00:03<00:07, 18.80it/s] 37%|███▋      | 82/220 [00:03<00:06, 20.04it/s] 39%|███▊      | 85/220 [00:04<00:06, 21.11it/s] 40%|████      | 88/220 [00:04<00:06, 19.27it/s] 41%|████      | 90/220 [00:04<00:06, 18.62it/s] 42%|████▏     | 93/220 [00:04<00:06, 18.98it/s] 43%|████▎     | 95/220 [00:04<00:07, 17.82it/s] 45%|████▍     | 98/220 [00:04<00:06, 19.21it/s] 45%|████▌     | 100/220 [00:04<00:06, 18.79it/s] 46%|████▋     | 102/220 [00:05<00:06, 18.02it/s] 47%|████▋     | 104/220 [00:05<00:06, 18.47it/s] 48%|████▊     | 106/220 [00:05<00:06, 18.02it/s] 49%|████▉     | 108/220 [00:05<00:06, 16.61it/s] 50%|█████     | 110/220 [00:05<00:06, 15.95it/s] 51%|█████▏    | 113/220 [00:05<00:05, 19.11it/s] 53%|█████▎    | 116/220 [00:05<00:04, 20.83it/s] 54%|█████▍    | 119/220 [00:05<00:05, 19.24it/s] 55%|█████▌    | 121/220 [00:06<00:05, 19.08it/s] 56%|█████▌    | 123/220 [00:06<00:05, 18.61it/s] 57%|█████▋    | 126/220 [00:06<00:04, 19.20it/s] 59%|█████▊    | 129/220 [00:06<00:04, 20.28it/s] 60%|██████    | 132/220 [00:06<00:04, 19.41it/s] 61%|██████▏   | 135/220 [00:06<00:04, 21.02it/s] 63%|██████▎   | 138/220 [00:06<00:03, 20.52it/s] 64%|██████▍   | 141/220 [00:07<00:03, 20.42it/s] 65%|██████▌   | 144/220 [00:07<00:03, 21.68it/s] 67%|██████▋   | 147/220 [00:07<00:03, 21.83it/s] 68%|██████▊   | 150/220 [00:07<00:03, 22.04it/s] 70%|██████▉   | 153/220 [00:07<00:02, 22.68it/s] 71%|███████   | 156/220 [00:07<00:02, 23.18it/s] 72%|███████▏  | 159/220 [00:07<00:02, 21.83it/s] 74%|███████▎  | 162/220 [00:07<00:02, 22.37it/s] 75%|███████▌  | 165/220 [00:08<00:02, 24.02it/s] 76%|███████▋  | 168/220 [00:08<00:02, 22.68it/s] 78%|███████▊  | 171/220 [00:08<00:02, 19.99it/s] 79%|███████▉  | 174/220 [00:08<00:02, 19.20it/s] 80%|████████  | 176/220 [00:08<00:02, 17.66it/s] 81%|████████▏ | 179/220 [00:08<00:02, 17.66it/s] 82%|████████▏ | 181/220 [00:08<00:02, 17.90it/s] 83%|████████▎ | 183/220 [00:09<00:02, 17.98it/s] 85%|████████▍ | 186/220 [00:09<00:01, 19.70it/s] 86%|████████▌ | 189/220 [00:09<00:01, 20.58it/s] 87%|████████▋ | 192/220 [00:09<00:01, 21.69it/s] 89%|████████▊ | 195/220 [00:09<00:01, 23.16it/s] 90%|█████████ | 198/220 [00:09<00:00, 22.44it/s] 91%|█████████▏| 201/220 [00:09<00:00, 21.70it/s] 93%|█████████▎| 204/220 [00:10<00:00, 22.77it/s] 94%|█████████▍| 207/220 [00:10<00:00, 23.24it/s] 95%|█████████▌| 210/220 [00:10<00:00, 21.49it/s] 97%|█████████▋| 213/220 [00:10<00:00, 20.64it/s] 99%|█████████▊| 217/220 [00:10<00:00, 23.71it/s]100%|██████████| 220/220 [00:10<00:00, 22.76it/s]100%|██████████| 220/220 [00:10<00:00, 20.51it/s]
+⚠️  Warning: Action dimensions [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41] have zero or very small std. Setting to 1e-8 to prevent NaN.
+Loading episode info from univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view...
+  0%|          | 0/220 [00:00<?, ?it/s] 82%|████████▏ | 180/220 [00:00<00:00, 1798.86it/s]100%|██████████| 220/220 [00:00<00:00, 1811.91it/s]
+  0%|          | 0/220 [00:00<?, ?it/s] 79%|███████▉  | 174/220 [00:00<00:00, 1735.03it/s]100%|██████████| 220/220 [00:00<00:00, 1737.24it/s]
+💾 Saving dataset statistics to univla/outputs/job_1862_univla_univla_100_percent_pos_only_dual_arm_robot_view/univla_100_percent_pos_only_dual_arm_robot_view/dataset_statistics.json
+🎯 Starting training...
+  0%|          | 0/10000 [00:00<?, ?it/s]                                         Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 777, in main
+    finetune_ablation(
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 594, in finetune_ablation
+    for batch_idx, batch in enumerate(dataloader):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/accelerate/data_loader.py", line 454, in __iter__
+    current_batch = next(dataloader_iter)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 631, in __next__
+    data = self._next_data()
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 1346, in _next_data
+    return self._process_data(data)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 1372, in _process_data
+    data.reraise()
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/_utils.py", line 722, in reraise
+    raise exception
+FileNotFoundError: Caught FileNotFoundError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py", line 308, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 51, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 51, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 167, in __getitem__
+    pixel_values = self.image_transform(Image.open(main_image_path).convert("RGB"))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/PIL/Image.py", line 3505, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: 'univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view/episode_000100/image_95.png'
+
+❌ Training failed: Caught FileNotFoundError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py", line 308, in _worker_loop
+    data = fetcher.fetch(index)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 51, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 51, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 167, in __getitem__
+    pixel_values = self.image_transform(Image.open(main_image_path).convert("RGB"))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/PIL/Image.py", line 3505, in open
+    fp = builtins.open(filename, "rb")
+FileNotFoundError: [Errno 2] No such file or directory: 'univla/converted_data/univla_100_percent_pos_only_dual_arm_robot_view/episode_000100/image_95.png'
+
+
+==================================================
+SUMMARY
+==================================================
+Data preparation: ✅ SUCCESS
+Training: ✅ SUCCESS
+Overall: ✅ SUCCESS
+==================================================

@@ -39,7 +39,7 @@ class BaseDataConfig(ABC):
         pass
 
     @abstractmethod
-    def transform(self) -> ModalityTransform:
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         pass
 
 
@@ -94,7 +94,7 @@ class FourierGr1ArmsOnlyDataConfig(BaseDataConfig):
 
         return modality_configs
 
-    def transform(self) -> ModalityTransform:
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -110,7 +110,10 @@ class FourierGr1ArmsOnlyDataConfig(BaseDataConfig):
             VideoToNumpy(apply_to=self.video_keys),
             # state transforms
             StateActionToTensor(apply_to=self.state_keys),
-            StateActionSinCosTransform(apply_to=self.state_keys),
+            StateActionTransform(
+                apply_to=self.state_keys,
+                normalization_modes={key: "min_max" for key in self.state_keys},
+            ),
             # action transforms
             StateActionToTensor(apply_to=self.action_keys),
             StateActionTransform(
@@ -127,8 +130,8 @@ class FourierGr1ArmsOnlyDataConfig(BaseDataConfig):
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
         return ComposedModalityTransform(transforms=transforms)
@@ -175,7 +178,7 @@ class So100DataConfig(BaseDataConfig):
 
         return modality_configs
 
-    def transform(self) -> ModalityTransform:
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -211,8 +214,8 @@ class So100DataConfig(BaseDataConfig):
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
         return ComposedModalityTransform(transforms=transforms)
@@ -271,7 +274,7 @@ class UnitreeG1DataConfig(BaseDataConfig):
 
         return modality_configs
 
-    def transform(self) -> ModalityTransform:
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -307,8 +310,8 @@ class UnitreeG1DataConfig(BaseDataConfig):
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
         return ComposedModalityTransform(transforms=transforms)
@@ -381,7 +384,7 @@ class FourierGr1FullUpperBodyDataConfig(BaseDataConfig):
         }
         return modality_configs
 
-    def transform(self):
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -416,8 +419,8 @@ class FourierGr1FullUpperBodyDataConfig(BaseDataConfig):
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
 
@@ -495,7 +498,7 @@ class BimanualPandaGripperDataConfig(BaseDataConfig):
         }
         return modality_configs
 
-    def transform(self):
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -531,8 +534,8 @@ class BimanualPandaGripperDataConfig(BaseDataConfig):
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
 
@@ -660,8 +663,47 @@ class FourierGr1ArmsWaistDataConfig(FourierGr1ArmsOnlyDataConfig):
     def modality_config(self):
         return super().modality_config()
 
-    def transform(self):
-        return super().transform()
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
+        transforms = [
+            # video transforms
+            VideoToTensor(apply_to=self.video_keys),
+            VideoCrop(apply_to=self.video_keys, scale=0.95),
+            VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
+            VideoColorJitter(
+                apply_to=self.video_keys,
+                brightness=0.3,
+                contrast=0.4,
+                saturation=0.5,
+                hue=0.08,
+            ),
+            VideoToNumpy(apply_to=self.video_keys),
+            # state transforms
+            StateActionToTensor(apply_to=self.state_keys),
+            StateActionTransform(
+                apply_to=self.state_keys,
+                normalization_modes={key: "min_max" for key in self.state_keys},
+            ),
+            # action transforms
+            StateActionToTensor(apply_to=self.action_keys),
+            StateActionTransform(
+                apply_to=self.action_keys,
+                normalization_modes={key: "min_max" for key in self.action_keys},
+            ),
+            # concat transforms
+            ConcatTransform(
+                video_concat_order=self.video_keys,
+                state_concat_order=self.state_keys,
+                action_concat_order=self.action_keys,
+            ),
+            # model-specific transform
+            GR00TTransform(
+                state_horizon=len(self.observation_indices),
+                action_horizon=len(self.action_indices),
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
+            ),
+        ]
+        return ComposedModalityTransform(transforms=transforms)
 
 
 ###########################################################################################
@@ -712,7 +754,7 @@ class OxeDroidDataConfig:
         }
         return modality_configs
 
-    def transform(self):
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -756,8 +798,8 @@ class OxeDroidDataConfig:
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
 
@@ -819,7 +861,7 @@ class AgibotGenie1DataConfig:
         }
         return modality_configs
 
-    def transform(self):
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -869,8 +911,8 @@ class AgibotGenie1DataConfig:
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
 
@@ -878,7 +920,7 @@ class AgibotGenie1DataConfig:
 
 ###########################################################################################
 
-class Gr1CubeDataConfig(BaseDataConfig):
+class Gr1DataConfig(BaseDataConfig):
     video_keys = ["video.camera_ego", "video.camera_ext"]
     state_keys = [
         "state.torso_joints",
@@ -928,7 +970,7 @@ class Gr1CubeDataConfig(BaseDataConfig):
 
         return modality_configs
 
-    def transform(self) -> ModalityTransform:
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -972,8 +1014,8 @@ class Gr1CubeDataConfig(BaseDataConfig):
 
 ###########################################################################################
 
-class Gr1GestureDataConfig(BaseDataConfig):
-    video_keys = ["video.camera_ego", "video.camera_ext"]
+class Gr1NoImageDataConfig(BaseDataConfig):
+    video_keys = []
     state_keys = [
         "state.torso_joints",
         "state.head_joints",
@@ -1022,7 +1064,115 @@ class Gr1GestureDataConfig(BaseDataConfig):
 
         return modality_configs
 
-    def transform(self) -> ModalityTransform:
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
+        transforms = []
+
+        # video transforms - only add if video_keys is not empty
+        if self.video_keys:
+            transforms.extend([
+                VideoToTensor(apply_to=self.video_keys),
+                VideoCrop(apply_to=self.video_keys, scale=0.95),
+                VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
+                VideoColorJitter(
+                    apply_to=self.video_keys,
+                    brightness=0.3,
+                    contrast=0.4,
+                    saturation=0.5,
+                    hue=0.08,
+                ),
+                VideoToNumpy(apply_to=self.video_keys),
+            ])
+
+        # state transforms
+        transforms.extend([
+            StateActionToTensor(apply_to=self.state_keys),
+            StateActionTransform(
+                apply_to=self.state_keys,
+                normalization_modes={key: "min_max" for key in self.state_keys},
+            ),
+        ])
+
+        # action transforms
+        transforms.extend([
+            StateActionToTensor(apply_to=self.action_keys),
+            StateActionTransform(
+                apply_to=self.action_keys,
+                normalization_modes={key: "min_max" for key in self.action_keys},
+            ),
+        ])
+
+        # concat transforms
+        transforms.append(
+            ConcatTransform(
+                video_concat_order=self.video_keys,
+                state_concat_order=self.state_keys,
+                action_concat_order=self.action_keys,
+            )
+        )
+
+        # model-specific transform
+        transforms.append(
+            GR00TTransform(
+                state_horizon=len(self.observation_indices),
+                action_horizon=len(self.action_indices),
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
+            )
+        )
+
+        return ComposedModalityTransform(transforms=transforms)
+
+###########################################################################################
+
+class AllexRightArmDataConfigMultiView(BaseDataConfig):
+    video_keys = ["video.camera_ego", "video.camera_ext"]
+    state_keys = [
+        "state.torso_joints",
+        "state.head_joints",
+        "state.right_arm_joints",
+        # "state.left_arm_joints",
+        "state.right_hand_joints",
+        # "state.left_hand_joints",
+    ]
+    action_keys = [
+        "action.right_arm_eef_pos",
+        "action.right_finger_joints",
+    ]
+    language_keys = ["annotation.human.task_description"]
+    observation_indices = [0]
+    action_indices = list(range(16))
+
+    def modality_config(self) -> dict[str, ModalityConfig]:
+        video_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.video_keys,
+        )
+
+        state_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.state_keys,
+        )
+
+        action_modality = ModalityConfig(
+            delta_indices=self.action_indices,
+            modality_keys=self.action_keys,
+        )
+
+        language_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.language_keys,
+        )
+
+        modality_configs = {
+            "video": video_modality,
+            "state": state_modality,
+            "action": action_modality,
+            "language": language_modality,
+        }
+
+        return modality_configs
+
+    def transform(self, action_dim: int = 21, state_dim: int = 64) -> ModalityTransform:
         transforms = [
             # video transforms
             VideoToTensor(apply_to=self.video_keys),
@@ -1058,17 +1208,16 @@ class Gr1GestureDataConfig(BaseDataConfig):
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
-                max_state_dim=64,
-                max_action_dim=32,
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
             ),
         ]
         return ComposedModalityTransform(transforms=transforms)
 
-
 ###########################################################################################
 
-class AllexCubeDataConfig(BaseDataConfig):
-    video_keys = ["video.camera_ego", "video.camera_ext"]
+class AllexNoImageDataConfig(BaseDataConfig):
+    video_keys = []
     state_keys = [
         "state.torso_joints",
         "state.head_joints",
@@ -1115,51 +1264,59 @@ class AllexCubeDataConfig(BaseDataConfig):
 
         return modality_configs
 
-    def transform(self) -> ModalityTransform:
-        transforms = [
-            # video transforms
-            VideoToTensor(apply_to=self.video_keys),
-            VideoCrop(apply_to=self.video_keys, scale=0.95),
-            VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
-            VideoColorJitter(
-                apply_to=self.video_keys,
-                brightness=0.3,
-                contrast=0.4,
-                saturation=0.5,
-                hue=0.08,
-            ),
-            VideoToNumpy(apply_to=self.video_keys),
-            # state transforms
+    def transform(self, action_dim: int = 32, state_dim: int = 64) -> ModalityTransform:
+        transforms = []
+
+        # video transforms - only add if video_keys is not empty
+        if self.video_keys:
+            transforms.extend([
+                VideoToTensor(apply_to=self.video_keys),
+                VideoCrop(apply_to=self.video_keys, scale=0.95),
+                VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
+            ])
+
+        # state transforms
+        transforms.extend([
             StateActionToTensor(apply_to=self.state_keys),
             StateActionTransform(
                 apply_to=self.state_keys,
                 normalization_modes={key: "min_max" for key in self.state_keys},
             ),
-            # action transforms
+        ])
+
+        # action transforms
+        transforms.extend([
             StateActionToTensor(apply_to=self.action_keys),
             StateActionTransform(
                 apply_to=self.action_keys,
                 normalization_modes={key: "min_max" for key in self.action_keys},
             ),
-            # concat transforms
+        ])
+
+        # concat transforms
+        transforms.append(
             ConcatTransform(
                 video_concat_order=self.video_keys,
                 state_concat_order=self.state_keys,
                 action_concat_order=self.action_keys,
-            ),
-            # model-specific transform
+            )
+        )
+
+        # model-specific transform
+        transforms.append(
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
                 max_state_dim=64,
-                max_action_dim=32,
-            ),
-        ]
+                max_action_dim=action_dim,
+            )
+        )
+
         return ComposedModalityTransform(transforms=transforms)
 
 ###########################################################################################
 
-class AllexBimanualCubeDataConfig(BaseDataConfig):
+class AllexDualArmDataConfigMultiView(BaseDataConfig):
     video_keys = ["video.camera_ego", "video.camera_ext"]
     state_keys = [
         "state.torso_joints",
@@ -1251,23 +1408,216 @@ class AllexBimanualCubeDataConfig(BaseDataConfig):
         ]
         return ComposedModalityTransform(transforms=transforms)
 
+
+class AllexDualArmDataConfigRobotView(BaseDataConfig):
+    video_keys = ["video.camera_ego"]
+    state_keys = [
+        "state.torso_joints",
+        "state.head_joints",
+        "state.right_arm_joints",
+        "state.left_arm_joints",
+        "state.right_hand_joints",
+        "state.left_hand_joints",
+    ]
+    action_keys = [
+        "action.right_arm_eef_pos",
+        "action.left_arm_eef_pos",
+        "action.right_finger_joints",
+        "action.left_finger_joints",
+    ]
+    language_keys = ["annotation.human.task_description"]
+    observation_indices = [0]
+    action_indices = list(range(16))
+
+    def modality_config(self) -> dict[str, ModalityConfig]:
+        video_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.video_keys,
+        )
+
+        state_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.state_keys,
+        )
+
+        action_modality = ModalityConfig(
+            delta_indices=self.action_indices,
+            modality_keys=self.action_keys,
+        )
+
+        language_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.language_keys,
+        )
+
+        modality_configs = {
+            "video": video_modality,
+            "state": state_modality,
+            "action": action_modality,
+            "language": language_modality,
+        }
+
+        return modality_configs
+
+    def transform(self) -> ModalityTransform:
+        transforms = [
+            # video transforms
+            VideoToTensor(apply_to=self.video_keys),
+            VideoCrop(apply_to=self.video_keys, scale=0.95),
+            VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
+            VideoColorJitter(
+                apply_to=self.video_keys,
+                brightness=0.3,
+                contrast=0.4,
+                saturation=0.5,
+                hue=0.08,
+            ),
+            VideoToNumpy(apply_to=self.video_keys),
+            # state transforms
+            StateActionToTensor(apply_to=self.state_keys),
+            StateActionTransform(
+                apply_to=self.state_keys,
+                normalization_modes={key: "min_max" for key in self.state_keys},
+            ),
+            # action transforms
+            StateActionToTensor(apply_to=self.action_keys),
+            StateActionTransform(
+                apply_to=self.action_keys,
+                normalization_modes={key: "min_max" for key in self.action_keys},
+            ),
+            # concat transforms
+            ConcatTransform(
+                video_concat_order=self.video_keys,
+                state_concat_order=self.state_keys,
+                action_concat_order=self.action_keys,
+            ),
+            # model-specific transform
+            GR00TTransform(
+                state_horizon=len(self.observation_indices),
+                action_horizon=len(self.action_indices),
+                max_state_dim=64,
+                max_action_dim=42,
+            ),
+        ]
+        return ComposedModalityTransform(transforms=transforms)
+
+###########################################################################################
+# Ablation Study Configurations for allex_gesture_easy_pos_vel_torq dataset
+###########################################################################################
+
+class AllexRightArmDataConfigRobotView(BaseDataConfig):
+    video_keys = ["video.camera_ego"]  # Only ego camera for robot_view
+    state_keys = [
+        "state.torso_joints",
+        "state.head_joints",
+        "state.right_arm_joints",
+        # "state.left_arm_joints",
+        "state.right_hand_joints",
+        # "state.left_hand_joints",
+    ]
+    action_keys = [
+        "action.right_arm_eef_pos",
+        "action.right_finger_joints",
+    ]
+    language_keys = ["annotation.human.task_description"]
+    observation_indices = [0]
+    action_indices = list(range(16))
+
+    def modality_config(self) -> dict[str, ModalityConfig]:
+        video_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.video_keys,
+        )
+
+        state_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.state_keys,
+        )
+
+        action_modality = ModalityConfig(
+            delta_indices=self.action_indices,
+            modality_keys=self.action_keys,
+        )
+
+        language_modality = ModalityConfig(
+            delta_indices=self.observation_indices,
+            modality_keys=self.language_keys,
+        )
+
+        modality_configs = {
+            "video": video_modality,
+            "state": state_modality,
+            "action": action_modality,
+            "language": language_modality,
+        }
+
+        return modality_configs
+
+    def transform(self, action_dim: int = 21, state_dim: int = 64) -> ModalityTransform:
+        transforms = [
+            # video transforms
+            VideoToTensor(apply_to=self.video_keys),
+            VideoCrop(apply_to=self.video_keys, scale=0.95),
+            VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
+            VideoColorJitter(
+                apply_to=self.video_keys,
+                brightness=0.3,
+                contrast=0.4,
+                saturation=0.5,
+                hue=0.08,
+            ),
+            VideoToNumpy(apply_to=self.video_keys),
+            # state transforms
+            StateActionToTensor(apply_to=self.state_keys),
+            StateActionTransform(
+                apply_to=self.state_keys,
+                normalization_modes={key: "min_max" for key in self.state_keys},
+            ),
+            # action transforms
+            StateActionToTensor(apply_to=self.action_keys),
+            StateActionTransform(
+                apply_to=self.action_keys,
+                normalization_modes={key: "min_max" for key in self.action_keys},
+            ),
+            # concat transforms
+            ConcatTransform(
+                video_concat_order=self.video_keys,
+                state_concat_order=self.state_keys,
+                action_concat_order=self.action_keys,
+            ),
+            # model-specific transform
+            GR00TTransform(
+                state_horizon=len(self.observation_indices),
+                action_horizon=len(self.action_indices),
+                max_state_dim=state_dim,
+                max_action_dim=action_dim,
+            ),
+        ]
+        return ComposedModalityTransform(transforms=transforms)
+
 ###########################################################################################
 
 DATA_CONFIG_MAP = {
-    "fourier_gr1_arms_waist": FourierGr1ArmsWaistDataConfig(),
-    "fourier_gr1_arms_only": FourierGr1ArmsOnlyDataConfig(),
-    "fourier_gr1_full_upper_body": FourierGr1FullUpperBodyDataConfig(),
-    "bimanual_panda_gripper": BimanualPandaGripperDataConfig(),
-    "bimanual_panda_hand": BimanualPandaHandDataConfig(),
-    "single_panda_gripper": SinglePandaGripperDataConfig(),
-    "so100": So100DataConfig(),
-    "so100_dualcam": So100DualCamDataConfig(),
-    "unitree_g1": UnitreeG1DataConfig(),
-    "unitree_g1_full_body": UnitreeG1FullBodyDataConfig(),
-    "oxe_droid": OxeDroidDataConfig(),
-    "agibot_genie1": AgibotGenie1DataConfig(),
-    "gr1_cube": Gr1CubeDataConfig(),
-    "gr1_gesture": Gr1GestureDataConfig(),
-    "allex_cube": AllexCubeDataConfig(),
-    "allex_bimanual_cube": AllexBimanualCubeDataConfig(),
+    # "fourier_gr1_arms_waist": FourierGr1ArmsWaistDataConfig(),
+    # "fourier_gr1_arms_only": FourierGr1ArmsOnlyDataConfig(),
+    # "fourier_gr1_full_upper_body": FourierGr1FullUpperBodyDataConfig(),
+    # "bimanual_panda_gripper": BimanualPandaGripperDataConfig(),
+    # "bimanual_panda_hand": BimanualPandaHandDataConfig(),
+    # "single_panda_gripper": SinglePandaGripperDataConfig(),
+    # "so100": So100DataConfig(),
+    # "so100_dualcam": So100DualCamDataConfig(),
+    # "unitree_g1": UnitreeG1DataConfig(),
+    # "unitree_g1_full_body": UnitreeG1FullBodyDataConfig(),
+    # "oxe_droid": OxeDroidDataConfig(),
+    # "agibot_genie1": AgibotGenie1DataConfig(),
+    # "gr1": Gr1DataConfig(),
+    # "gr1_no_image": Gr1NoImageDataConfig(),
+    # "allex": AllexRightArmDataConfigMultiView(),
+    # "allex_bimanual": AllexBimanualDataConfig(),
+    # "allex_no_image": AllexNoImageDataConfig(),
+    # GR00T Ablation study configurations - properly handle camera settings
+    "allex_right_arm_robot_view_pos_only": AllexRightArmDataConfigRobotView(),
+    "allex_right_arm_multi_view_pos_only": AllexRightArmDataConfigMultiView(),
+    "allex_dual_arm_robot_view_pos_only": AllexDualArmDataConfigRobotView(),
+    "allex_dual_arm_multi_view_pos_only": AllexDualArmDataConfigMultiView(),
 }

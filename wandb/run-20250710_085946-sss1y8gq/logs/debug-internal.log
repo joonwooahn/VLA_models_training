@@ -1,0 +1,14 @@
+{"time":"2025-07-10T08:59:46.496448405+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-10T08:59:46.496483598+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250710_085946-sss1y8gq/logs/debug-core.log"}
+{"time":"2025-07-10T08:59:46.497383785+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-10T08:59:46.497400193+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250710_085946-sss1y8gq/logs/debug-core.log"}
+{"time":"2025-07-10T08:59:46.515309401+09:00","level":"INFO","msg":"created new stream","id":"sss1y8gq"}
+{"time":"2025-07-10T08:59:46.515367347+09:00","level":"INFO","msg":"stream: started","id":"sss1y8gq"}
+{"time":"2025-07-10T08:59:46.515418233+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"sss1y8gq"}}
+{"time":"2025-07-10T08:59:46.515642267+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"sss1y8gq"}}
+{"time":"2025-07-10T08:59:46.515747736+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"sss1y8gq"}}
+{"time":"2025-07-10T08:59:46.982070245+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-10T08:59:46.986442706+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-10T09:07:29.612511862+09:00","level":"INFO","msg":"stream: closing","id":"sss1y8gq"}
+{"time":"2025-07-10T09:07:29.612614369+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-10T09:07:29.614444352+09:00","level":"INFO","msg":"Stopped system monitor"}

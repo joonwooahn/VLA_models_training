@@ -426,17 +426,49 @@ class PI0Policy(PreTrainedPolicy):
         return actions
 
     def prepare_state(self, batch):
-        """Pad state"""
+        """Prepare state with proper joint filtering using unified indices"""
+        state = batch[OBS_STATE]
+        
         if self.config.use_extended_dim:
-            return batch[OBS_STATE]
-        state = pad_vector(batch[OBS_STATE], self.config.max_state_dim)
+            # Use proper joint filtering if state_indices are provided
+            if hasattr(self.config, 'state_indices') and self.config.state_indices is not None:
+                # Filter using specific joint indices - UNIFIED ACROSS ALL MODELS
+                state = state[..., self.config.state_indices]
+                return state
+            else:
+                # Fallback: Filter state dimensions if needed (for RLWRLD allex_gesture_easy_pos_vel_torq dataset)
+                # Original dataset has 180 dims: [pos(60) + vel(60) + torque(60)]
+                # ext_state_dim determines which parts to use:
+                # - 60: position only
+                # - 120: position + velocity  
+                # - 180: position + velocity + torque (full)
+                if state.shape[-1] == 180 and self.config.ext_state_dim < 180:
+                    state = state[..., :self.config.ext_state_dim]
+                
+                return state
+        
+        state = pad_vector(state, self.config.max_state_dim)
         return state
 
     def prepare_action(self, batch):
-        """Pad action"""
+        """Prepare action with proper joint filtering using unified indices"""
+        actions = batch[ACTION]
+        
         if self.config.use_extended_dim:
-            return batch[ACTION]
-        actions = pad_vector(batch[ACTION], self.config.max_action_dim)
+            # Use proper joint filtering if action_indices are provided
+            if hasattr(self.config, 'action_indices') and self.config.action_indices is not None:
+                # Filter using specific joint indices - UNIFIED ACROSS ALL MODELS
+                actions = actions[..., self.config.action_indices]
+                return actions
+            else:
+                # Fallback: Filter action dimensions if needed (for RLWRLD allex_gesture_easy_pos_vel_torq dataset)
+                # Original dataset has 42 dims for dual_arm, but some ablations use 21 dims for right_arm
+                if actions.shape[-1] == 42 and self.config.ext_action_dim < 42:
+                    actions = actions[..., :self.config.ext_action_dim]
+                
+                return actions
+        
+        actions = pad_vector(actions, self.config.max_action_dim)
         return actions
 
 

@@ -1,0 +1,18 @@
+{"time":"2025-07-09T19:00:36.831368859+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T19:00:36.831378661+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_190036-unutmr59/logs/debug-core.log"}
+{"time":"2025-07-09T19:00:36.831849403+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T19:00:36.831854284+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_190036-unutmr59/logs/debug-core.log"}
+{"time":"2025-07-09T19:00:36.838033733+09:00","level":"INFO","msg":"created new stream","id":"unutmr59"}
+{"time":"2025-07-09T19:00:36.838058029+09:00","level":"INFO","msg":"stream: started","id":"unutmr59"}
+{"time":"2025-07-09T19:00:36.838094028+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"unutmr59"}}
+{"time":"2025-07-09T19:00:36.838149576+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"unutmr59"}}
+{"time":"2025-07-09T19:00:36.838177438+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"unutmr59"}}
+{"time":"2025-07-09T19:00:37.176341179+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-09T19:00:37.180227619+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T19:00:38.562933906+09:00","level":"INFO","msg":"stream: closing","id":"unutmr59"}
+{"time":"2025-07-09T19:00:38.562954317+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T19:00:38.56319526+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-09T19:00:39.88251987+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"unutmr59"}}
+{"time":"2025-07-09T19:00:39.882560244+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"unutmr59"}}
+{"time":"2025-07-09T19:00:39.882588799+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"unutmr59"}}
+{"time":"2025-07-09T19:00:39.883595722+09:00","level":"INFO","msg":"stream: closed","id":"unutmr59"}

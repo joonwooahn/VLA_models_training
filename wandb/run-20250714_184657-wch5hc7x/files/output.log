@@ -1,0 +1,55 @@
+  0%|          | 0/5000 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/scripts/gr00t_finetune.py", line 302, in <module>
+    main(config)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/scripts/gr00t_finetune.py", line 274, in main
+    experiment.train()
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/runner.py", line 171, in train
+    self.trainer.train(resume_from_checkpoint=self.resume_from_checkpoint)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/trainer.py", line 153, in train
+    return super().train(resume_from_checkpoint, trial, ignore_keys_for_eval, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 2514, in _inner_training_loop
+    batch_samples, num_items_in_batch = self.get_batch_samples(epoch_iterator, num_batches, args.device)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 5243, in get_batch_samples
+    batch_samples.append(next(epoch_iterator))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/accelerate/data_loader.py", line 552, in __iter__
+    current_batch = next(dataloader_iter)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 701, in __next__
+    data = self._next_data()
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 1465, in _next_data
+    return self._process_data(data)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/utils/data/dataloader.py", line 1491, in _process_data
+    data.reraise()
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/_utils.py", line 715, in reraise
+    raise exception
+ValueError: Caught ValueError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/data/transform/base.py", line 113, in apply
+    data = transform(data)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/transforms.py", line 533, in __call__
+    return self.apply(data)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/transforms.py", line 526, in apply
+    return self.apply_single(data)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/transforms.py", line 495, in apply_single
+    actions, actions_mask, _ = self._prepare_action(data)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/transforms.py", line 425, in _prepare_action
+    actions = actions[:, self.action_filter_indices]
+IndexError: index 21 is out of bounds for dimension 0 with size 21
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/utils/data/_utils/worker.py", line 351, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/utils/data/_utils/fetch.py", line 52, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/data/dataset.py", line 502, in __getitem__
+    return self.transforms(self.get_step_data(trajectory_id, base_index))
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/data/transform/base.py", line 74, in __call__
+    return self.apply(data)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/data/transform/base.py", line 115, in apply
+    raise ValueError(f"Error applying transform {i} to data: {e}") from e
+ValueError: Error applying transform 10 to data: index 21 is out of bounds for dimension 0 with size 21

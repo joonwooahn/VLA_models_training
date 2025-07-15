@@ -4,7 +4,8 @@
 #SBATCH --partition=batch
 #SBATCH --gpus=1
 
-# Conda 초기화 및 환경 활성화
+# srun --comment "gr00t training" --gpus=1 --nodes=1 --pty /bin/bash
+
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate gr00t
 echo "✅ Conda environment 'gr00t' activated."
@@ -15,8 +16,9 @@ mkdir -p checkpoints 2>/dev/null
 python scripts/gr00t_finetune.py \
    --dataset-path ./demo_data/allex_cube \
    --num-gpus 1 \
-   --output-dir checkpoints/allex-bimanual-cube2  \
+   --output-dir checkpoints/allex-bimanual-cube  \
    --max-steps 10000 \
+   --save-steps 5000 \
    --data-config allex_bimanual \
    --video-backend torchvision_av \
    --action_dim 42 \

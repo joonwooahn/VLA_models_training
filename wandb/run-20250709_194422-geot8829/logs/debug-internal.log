@@ -1,0 +1,14 @@
+{"time":"2025-07-09T19:44:22.11653953+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T19:44:22.116551456+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_194422-geot8829/logs/debug-core.log"}
+{"time":"2025-07-09T19:44:22.117071688+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T19:44:22.11707557+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_194422-geot8829/logs/debug-core.log"}
+{"time":"2025-07-09T19:44:22.121732823+09:00","level":"INFO","msg":"created new stream","id":"geot8829"}
+{"time":"2025-07-09T19:44:22.121752024+09:00","level":"INFO","msg":"stream: started","id":"geot8829"}
+{"time":"2025-07-09T19:44:22.121769374+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"geot8829"}}
+{"time":"2025-07-09T19:44:22.121790722+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"geot8829"}}
+{"time":"2025-07-09T19:44:22.12177574+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"geot8829"}}
+{"time":"2025-07-09T19:44:22.515453828+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-09T19:44:22.517703771+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T20:11:20.455471579+09:00","level":"INFO","msg":"stream: closing","id":"geot8829"}
+{"time":"2025-07-09T20:11:20.455601993+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T20:11:20.457079929+09:00","level":"INFO","msg":"Stopped system monitor"}

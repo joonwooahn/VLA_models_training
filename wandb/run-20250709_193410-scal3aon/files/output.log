@@ -1,0 +1,15 @@
+  0%|          | 0/100 [00:00<?, ?it/s]/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/action_head/cross_attention_dit.py:281: FutureWarning: Accessing config attribute `interleave_self_attention` directly via 'DiT' object attribute is deprecated. Please access 'interleave_self_attention' over 'DiT's config object instead, e.g. 'unet.config.interleave_self_attention'.
+  if idx % 2 == 1 and self.interleave_self_attention:
+Could not estimate the number of tokens of the input, floating-point operations will not be computed
+100%|██████████| 100/100 [01:06<00:00,  1.51it/s]
+{'loss': 2.9353, 'grad_norm': 9.391953468322754, 'learning_rate': 9.956320346634876e-05, 'epoch': 0.0}
+{'loss': 12.3806, 'grad_norm': 14.96414566040039, 'learning_rate': 9.473646649103818e-05, 'epoch': 0.0}
+{'loss': 4.8693, 'grad_norm': 10.83012580871582, 'learning_rate': 8.506183921362443e-05, 'epoch': 0.0}
+{'loss': 2.5612, 'grad_norm': 9.644977569580078, 'learning_rate': 7.158771761692464e-05, 'epoch': 0.0}
+{'loss': 9.1311, 'grad_norm': 8.688359260559082, 'learning_rate': 5.577423184847932e-05, 'epoch': 0.0}
+{'loss': 4.0886, 'grad_norm': 16.422443389892578, 'learning_rate': 3.933501846281267e-05, 'epoch': 0.0}
+{'loss': 9.6967, 'grad_norm': 7.4759392738342285, 'learning_rate': 2.405152131093926e-05, 'epoch': 0.0}
+{'loss': 2.7334, 'grad_norm': 10.429038047790527, 'learning_rate': 1.157994445715706e-05, 'epoch': 0.0}
+{'loss': 7.9166, 'grad_norm': 20.353872299194336, 'learning_rate': 3.271776770026963e-06, 'epoch': 0.0}
+{'loss': 9.3582, 'grad_norm': 14.959246635437012, 'learning_rate': 2.7337132953697554e-08, 'epoch': 0.0}
+{'train_runtime': 68.0512, 'train_samples_per_second': 2.939, 'train_steps_per_second': 1.469, 'train_loss': 6.567098617553711, 'epoch': 0.0}

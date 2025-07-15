@@ -60,26 +60,68 @@ def collate(features: List[dict], eagle_processor) -> dict:
         values = [elem[key] for elem in features]
 
         if key == "eagle_content":
-            text_list = []
-            image_inputs = []
-            for v in values:
-                curr_text_list = v["text_list"]
-                curr_image_inputs = v["image_inputs"]
-                text_list += curr_text_list
-                image_inputs += curr_image_inputs
-            eagle_inputs = eagle_processor(
-                text=text_list, images=image_inputs, return_tensors="pt", padding=True
-            )
-            for k, v in eagle_inputs.items():
-                k = "eagle_" + k
-                batch[k] = v
+            # eagle_content is now handled in _apply_vlm_processing
+            # Skip processing here as eagle_ keys are already added
+            continue
+        elif key.startswith("eagle_"):
+            # Directly use the processed eagle inputs
+            if key == "eagle_pixel_values":
+                # Handle empty pixel_values case
+                if all(v.numel() == 0 for v in values):
+                    # All are empty, create a proper empty tensor
+                    batch[key] = torch.empty(len(values), 0, 224, 224, dtype=torch.float32)
+                else:
+                    # Normal concatenation for non-empty tensors
+                    batch[key] = torch.cat([v for v in values if v.numel() > 0])
+            elif key == "eagle_image_sizes":
+                # Handle empty image_sizes case
+                if all(v.numel() == 0 for v in values):
+                    # All are empty, create a proper empty tensor
+                    batch[key] = torch.empty(len(values), 0, 2, dtype=torch.long)
+                else:
+                    # Normal concatenation for non-empty tensors
+                    batch[key] = torch.cat([v for v in values if v.numel() > 0])
+            elif key in ("eagle_input_ids", "eagle_attention_mask"):
+                # Handle sequence data that may have different lengths
+                # Apply padding to make all sequences the same length
+                max_length = max(v.shape[-1] for v in values)
+                padded_values = []
+                for v in values:
+                    if v.shape[-1] < max_length:
+                        # Pad the sequence
+                        if key == "eagle_input_ids":
+                            # Use pad_token_id for input_ids (typically 0)
+                            pad_value = getattr(eagle_processor.tokenizer, 'pad_token_id', 0)
+                        else:
+                            # Use 0 for attention_mask
+                            pad_value = 0
+                        
+                        padding_size = max_length - v.shape[-1]
+                        if v.ndim == 1:
+                            padded_v = torch.cat([v, torch.full((padding_size,), pad_value, dtype=v.dtype, device=v.device)])
+                        else:
+                            padding_shape = list(v.shape)
+                            padding_shape[-1] = padding_size
+                            padded_v = torch.cat([v, torch.full(padding_shape, pad_value, dtype=v.dtype, device=v.device)], dim=-1)
+                        padded_values.append(padded_v)
+                    else:
+                        padded_values.append(v)
+                batch[key] = torch.cat(padded_values)
+            else:
+                # For other eagle keys, concatenate normally
+                batch[key] = torch.cat(values)
         elif key in ("pixel_values", "image_grid_thw", "attention_mask", "input_ids"):
             # Concat in existing batch dimension.
             batch[key] = torch.cat(values)
         else:
             # state, state_mask, action and action_mask.
             # Stack to form the batch dimension.
-            batch[key] = torch.from_numpy(np.stack(values))
+            if isinstance(values[0], torch.Tensor):
+                # Already tensors, just stack
+                batch[key] = torch.stack(values)
+            else:
+                # Numpy arrays, convert to tensor then stack
+                batch[key] = torch.from_numpy(np.stack(values))
     return batch
 
 
@@ -151,16 +193,46 @@ class GR00TTransform(InvertibleModalityTransform):
             if modality not in grouped_keys:
                 grouped_keys[modality] = []
             grouped_keys[modality].append(key)
-        # Use video key to determine batch size.
-        video_ndim = data["video"].ndim
-        if video_ndim == 5:  # Interpret as [T, V, H, W, C]
-            is_batched = False
-            batch_size = 1
-        elif video_ndim == 6:  # Interpret as [B, T, V, H, W, C]
-            is_batched = True
-            batch_size = data["video"].shape[0]
+        
+        # Check if video exists, if not assume single batch
+        if "video" in data:
+            # Use video key to determine batch size.
+            video_ndim = data["video"].ndim
+            if video_ndim == 5:  # Interpret as [T, V, H, W, C]
+                is_batched = False
+                batch_size = 1
+            elif video_ndim == 6:  # Interpret as [B, T, V, H, W, C]
+                is_batched = True
+                batch_size = data["video"].shape[0]
+            else:
+                raise ValueError(f"Unsupported video number of dimensions: {video_ndim}")
         else:
-            raise ValueError(f"Unsupported video number of dimensions: {video_ndim}")
+            # No video data, check other modalities for batch size
+            # Use state or action to determine batch size
+            if "state" in data:
+                state_ndim = data["state"].ndim
+                if state_ndim == 2:  # [T, D]
+                    is_batched = False
+                    batch_size = 1
+                elif state_ndim == 3:  # [B, T, D]
+                    is_batched = True
+                    batch_size = data["state"].shape[0]
+                else:
+                    raise ValueError(f"Unsupported state number of dimensions: {state_ndim}")
+            elif "action" in data:
+                action_ndim = data["action"].ndim
+                if action_ndim == 2:  # [T, D]
+                    is_batched = False
+                    batch_size = 1
+                elif action_ndim == 3:  # [B, T, D]
+                    is_batched = True
+                    batch_size = data["action"].shape[0]
+                else:
+                    raise ValueError(f"Unsupported action number of dimensions: {action_ndim}")
+            else:
+                # Default to single batch if no recognizable modality
+                is_batched = False
+                batch_size = 1
 
         # Handle language
         if "language" in grouped_keys:
@@ -173,14 +245,10 @@ class GR00TTransform(InvertibleModalityTransform):
         """
         Args:
             batch:
-                video: [V, T, C, H, W]
+                images: [V, T, C, H, W] (optional)
+                language: str
         Returns: required input with the format `BatchFeature`
         """
-        # TODO(YL, FH): check if this is correct
-        images = batch["images"]  # [V, T, C, H, W]
-        images.shape[0]
-
-        np_images = rearrange(images, "v t c h w -> (t v) c h w")
         text_content = []
 
         # handle language
@@ -189,21 +257,52 @@ class GR00TTransform(InvertibleModalityTransform):
             lang = lang[0]
         text_content.append({"type": "text", "text": lang})
 
-        eagle_images = [Image.fromarray(np.transpose(v, (1, 2, 0))) for v in np_images]
-        eagle_image = [{"type": "image", "image": img} for img in eagle_images]
-        eagle_conversation = [
-            {
-                "role": "user",
-                "content": eagle_image + text_content,
-            }
-        ]
+        # Handle images if available
+        if "images" in batch:
+            images = batch["images"]  # [V, T, C, H, W]
+            np_images = rearrange(images, "v t c h w -> (t v) c h w")
+            eagle_images = [Image.fromarray(np.transpose(v, (1, 2, 0))) for v in np_images]
+            eagle_image = [{"type": "image", "image": img} for img in eagle_images]
+            eagle_conversation = [
+                {
+                    "role": "user",
+                    "content": eagle_image + text_content,
+                }
+            ]
+            image_inputs, video_inputs = self.eagle_processor.process_vision_info(eagle_conversation)
+        else:
+            # No images, only text
+            eagle_conversation = [
+                {
+                    "role": "user",
+                    "content": text_content,
+                }
+            ]
+            # Set empty lists for image/video inputs when no images
+            image_inputs = []
+            video_inputs = []
 
         text_list = [
             self.eagle_processor.apply_chat_template(
                 eagle_conversation, tokenize=False, add_generation_prompt=True
             )
         ]
-        image_inputs, video_inputs = self.eagle_processor.process_vision_info(eagle_conversation)
+        
+        # Process with eagle_processor to get proper tensor format
+        if image_inputs:
+            # Normal case with images
+            eagle_inputs = self.eagle_processor(
+                text=text_list, images=image_inputs, return_tensors="pt", padding=True
+            )
+        else:
+            # No images case - create empty pixel_values and image_sizes
+            eagle_inputs = self.eagle_processor(
+                text=text_list, images=None, return_tensors="pt", padding=True
+            )
+            # Add empty pixel_values and image_sizes that Eagle model expects
+            eagle_inputs["pixel_values"] = torch.empty(0, 0, 224, 224, dtype=torch.float32)
+            eagle_inputs["image_sizes"] = torch.empty(0, 2, dtype=torch.long)
+        
         eagle_content = {
             "image_inputs": image_inputs,
             "video_inputs": video_inputs,
@@ -211,11 +310,18 @@ class GR00TTransform(InvertibleModalityTransform):
         }
         inputs = {}
         inputs["eagle_content"] = eagle_content
+        
+        # Add eagle_inputs directly to inputs with eagle_ prefix
+        for k, v in eagle_inputs.items():
+            inputs["eagle_" + k] = v
+            
         return inputs
 
     def _prepare_video(self, data: dict):
-        """Process, stack, and pad images from data['video']."""
-        ## TODO(YL, FH): check if this is correct
+        """Process, stack, and pad images from data['video']. Returns None if no video."""
+        if "video" not in data:
+            return None
+            
         images = rearrange(
             data["video"],
             "t v h w c -> v t c h w",
@@ -249,24 +355,48 @@ class GR00TTransform(InvertibleModalityTransform):
             return state, state_mask, n_state_tokens
 
         state = data["state"]
-        assert state.shape[0] == self.state_horizon, f"{state.shape=}, {self.state_horizon=}"
-
-        n_state_dims = state.shape[-1]
-
-        # Instead of asserting, just take the first max_state_dim dimensions if needed
-        if n_state_dims > self.max_state_dim:
-            state = state[:, : self.max_state_dim]
-            n_state_dims = self.max_state_dim
+        
+        # Check if state is batched (3D) or single (2D)
+        if state.ndim == 3:  # [B, T, D] - batched
+            batch_size, time_steps, state_dims = state.shape
+            assert time_steps == self.state_horizon, f"{state.shape=}, {self.state_horizon=}"
+            
+            n_state_dims = state_dims
+            
+            # Handle padding for batched data
+            if n_state_dims > self.max_state_dim:
+                state = state[:, :, :self.max_state_dim]
+                n_state_dims = self.max_state_dim
+            else:
+                # Pad up to max_state_dim if smaller - 3D padding
+                state = np.pad(state, ((0, 0), (0, 0), (0, self.max_state_dim - n_state_dims)), "constant")
+            
+            # Create mask for real state dims
+            state_mask = np.zeros_like(state).astype(bool)
+            state_mask[:, :, :n_state_dims] = True
+            
+        elif state.ndim == 2:  # [T, D] - single sample
+            time_steps, state_dims = state.shape
+            assert time_steps == self.state_horizon, f"{state.shape=}, {self.state_horizon=}"
+            
+            n_state_dims = state_dims
+            
+            # Handle padding for single sample
+            if n_state_dims > self.max_state_dim:
+                state = state[:, :self.max_state_dim]
+                n_state_dims = self.max_state_dim
+            else:
+                # Pad up to max_state_dim if smaller - 2D padding
+                state = np.pad(state, ((0, 0), (0, self.max_state_dim - n_state_dims)), "constant")
+            
+            # Create mask for real state dims
+            state_mask = np.zeros_like(state).astype(bool)
+            state_mask[:, :n_state_dims] = True
         else:
-            # Pad up to max_state_dim if smaller
-            state = np.pad(state, ((0, 0), (0, self.max_state_dim - n_state_dims)), "constant")
-
-        # Create mask for real state dims
-        state_mask = np.zeros_like(state).astype(bool)
-        state_mask[:, :n_state_dims] = True
+            raise ValueError(f"Unsupported state dimensions: {state.ndim}. Expected 2D [T, D] or 3D [B, T, D]")
 
         # We only have 1 "proprio" token to represent the entire state
-        n_state_tokens = state.shape[0]
+        n_state_tokens = state.shape[-2]  # Use -2 to get time dimension for both 2D and 3D
         return state, state_mask, n_state_tokens
 
     def _prepare_action(self, data: dict):
@@ -280,21 +410,45 @@ class GR00TTransform(InvertibleModalityTransform):
             return actions, actions_mask, n_action_tokens
 
         actions = data["action"]
-        assert actions.shape[0] == self.action_horizon, f"{actions.shape=}, {self.action_horizon=}"
-
-        n_action_tokens = actions.shape[0]  # T
-        n_action_dims = actions.shape[1]
-
-        assert (
-            n_action_dims <= self.max_action_dim
-        ), f"Action dim {n_action_dims} exceeds max allowed {self.max_action_dim}."
-
-        # Pad the channel dimension
-        actions = np.pad(actions, ((0, 0), (0, self.max_action_dim - n_action_dims)), "constant")
-
-        # Create mask: [T, max_action_dim]
-        actions_mask = np.zeros((n_action_tokens, self.max_action_dim), dtype=bool)
-        actions_mask[:, :n_action_dims] = True
+        
+        # Check if actions is batched (3D) or single (2D)
+        if actions.ndim == 3:  # [B, T, D] - batched
+            batch_size, time_steps, action_dims = actions.shape
+            assert time_steps == self.action_horizon, f"{actions.shape=}, {self.action_horizon=}"
+            
+            n_action_tokens = time_steps
+            n_action_dims = action_dims
+            
+            assert (
+                n_action_dims <= self.max_action_dim
+            ), f"Action dim {n_action_dims} exceeds max allowed {self.max_action_dim}."
+            
+            # Pad the channel dimension for batched data
+            actions = np.pad(actions, ((0, 0), (0, 0), (0, self.max_action_dim - n_action_dims)), "constant")
+            
+            # Create mask: [B, T, max_action_dim]
+            actions_mask = np.zeros((batch_size, n_action_tokens, self.max_action_dim), dtype=bool)
+            actions_mask[:, :, :n_action_dims] = True
+            
+        elif actions.ndim == 2:  # [T, D] - single sample
+            time_steps, action_dims = actions.shape
+            assert time_steps == self.action_horizon, f"{actions.shape=}, {self.action_horizon=}"
+            
+            n_action_tokens = time_steps
+            n_action_dims = action_dims
+            
+            assert (
+                n_action_dims <= self.max_action_dim
+            ), f"Action dim {n_action_dims} exceeds max allowed {self.max_action_dim}."
+            
+            # Pad the channel dimension for single sample
+            actions = np.pad(actions, ((0, 0), (0, self.max_action_dim - n_action_dims)), "constant")
+            
+            # Create mask: [T, max_action_dim]
+            actions_mask = np.zeros((n_action_tokens, self.max_action_dim), dtype=bool)
+            actions_mask[:, :n_action_dims] = True
+        else:
+            raise ValueError(f"Unsupported action dimensions: {actions.ndim}. Expected 2D [T, D] or 3D [B, T, D]")
 
         return actions, actions_mask, n_action_tokens
 
@@ -303,9 +457,14 @@ class GR00TTransform(InvertibleModalityTransform):
 
         # 1) Prepare video and language with vlm processing.
         images = self._prepare_video(data)
-        images = images.astype(np.uint8)
         language = self._prepare_language(data)
-        batch_data = {"images": images, "language": language}
+        
+        # Create batch data for VLM processing
+        batch_data = {"language": language}
+        if images is not None:
+            images = images.astype(np.uint8)
+            batch_data["images"] = images
+            
         vlm_outputs = self._apply_vlm_processing(batch_data)
 
         # 2) Prepare state

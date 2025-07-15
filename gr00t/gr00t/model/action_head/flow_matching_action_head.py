@@ -15,6 +15,7 @@
 
 from dataclasses import dataclass, field
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -39,9 +40,21 @@ class CategorySpecificLinear(nn.Module):
         self.b = nn.Parameter(torch.zeros(num_categories, hidden_dim))
 
     def forward(self, x, cat_ids):
-        selected_W = self.W[cat_ids]
-        selected_b = self.b[cat_ids]
-        return torch.bmm(x, selected_W) + selected_b.unsqueeze(1)
+        # Handle both scalar and tensor cat_ids
+        if isinstance(cat_ids, int):
+            # For scalar cat_ids, we need to handle batch dimension properly
+            selected_W = self.W[cat_ids]  # Shape: [input_dim, hidden_dim]
+            selected_b = self.b[cat_ids]  # Shape: [hidden_dim]
+            
+            # Use torch.matmul for proper broadcasting: [B, T, input_dim] @ [input_dim, hidden_dim] -> [B, T, hidden_dim]
+            result = torch.matmul(x, selected_W) + selected_b
+        else:
+            # For tensor cat_ids, use original bmm approach
+            selected_W = self.W[cat_ids]
+            selected_b = self.b[cat_ids]
+            result = torch.bmm(x, selected_W) + selected_b.unsqueeze(1)
+            
+        return result
 
 
 class CategorySpecificMLP(nn.Module):
@@ -138,6 +151,7 @@ class FlowmatchingActionHeadConfig(PretrainedConfig):
         metadata={"help": "Number of inference steps for noise diffusion."},
     )
     max_num_embodiments: int = field(default=32, metadata={"help": "Number of embodiments."})
+    max_state_dim: int = field(default=64, metadata={"help": "Maximum state dimension."})
     tune_projector: bool = field(default=True, metadata={"help": "Whether to tune the projector."})
     tune_diffusion_model: bool = field(
         default=True, metadata={"help": "Whether to tune the diffusion model."}
@@ -354,6 +368,10 @@ class FlowmatchingActionHead(nn.Module):
         # Get vision and language embeddings.
         vl_embeds = backbone_output.backbone_features
         embodiment_id = action_input.embodiment_id
+
+        # Convert state to tensor if it's numpy array
+        if isinstance(action_input.state, np.ndarray):
+            action_input.state = torch.from_numpy(action_input.state).to(device=vl_embeds.device, dtype=vl_embeds.dtype)
 
         # Embed state.
         state_features = self.state_encoder(action_input.state, embodiment_id)

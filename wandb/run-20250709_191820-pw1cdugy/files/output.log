@@ -1,0 +1,35 @@
+  0%|          | 0/100 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/scripts/gr00t_finetune.py", line 296, in <module>
+    main(config)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/scripts/gr00t_finetune.py", line 268, in main
+    experiment.train()
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/runner.py", line 171, in train
+    self.trainer.train(resume_from_checkpoint=self.resume_from_checkpoint)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/trainer.py", line 153, in train
+    return super().train(resume_from_checkpoint, trial, ignore_keys_for_eval, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 2245, in train
+    return inner_training_loop(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 2560, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/transformers/trainer.py", line 3736, in training_step
+    loss = self.compute_loss(model, inputs, num_items_in_batch=num_items_in_batch)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/experiment/trainer.py", line 75, in compute_loss
+    outputs = model(inputs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/accelerate/utils/operations.py", line 823, in forward
+    return model_forward(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/accelerate/utils/operations.py", line 811, in __call__
+    return convert_to_fp32(self.model_forward(*args, **kwargs))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/gr00t/lib/python3.10/site-packages/torch/amp/autocast_mode.py", line 44, in decorate_autocast
+    return func(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/gr00t_n1.py", line 166, in forward
+    backbone_inputs, action_inputs = self.prepare_input(inputs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/gr00t_n1.py", line 184, in prepare_input
+    self.validate_inputs(inputs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/gr00t_n1.py", line 127, in validate_inputs
+    raise ValueError(error_msg)
+ValueError: Error: unexpected input/output
+action.shape=torch.Size([2, 16, 32])

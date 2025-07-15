@@ -214,9 +214,11 @@ class PI0FASTPolicy(PreTrainedPolicy):
 
             actions = actions[:, : self.config.n_action_steps]
 
-            original_action_dim = self.config.action_feature.shape[
-                0
-            ]  # self.config.max_action_dim  # self.config.action_feature.shape[0]
+            # Use extended action dimension when available
+            if self.config.use_extended_dim:
+                original_action_dim = self.config.ext_action_dim
+            else:
+                original_action_dim = self.config.action_feature.shape[0]
             actions = actions[:, :, :original_action_dim]
 
             actions = self.unnormalize_outputs({"action": actions})["action"]
@@ -229,7 +231,7 @@ class PI0FASTPolicy(PreTrainedPolicy):
             self._action_queue.extend(actions.transpose(0, 1))
         return self._action_queue.popleft()
 
-    def forward(self, batch: dict[str, Tensor]) -> dict[str, Tensor]:
+    def forward(self, batch: dict[str, Tensor]) -> tuple[Tensor, dict[str, Tensor]]:
         if self.config.adapt_to_pi_aloha:
             batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
             batch[ACTION] = self._pi_aloha_encode_actions_inv(batch[ACTION])
@@ -237,6 +239,58 @@ class PI0FASTPolicy(PreTrainedPolicy):
         batch = self.normalize_targets(batch)
         loss_dict = self.model.forward(batch)
         return loss_dict["loss"], loss_dict
+
+    def prepare_state(self, batch):
+        """Prepare state with proper joint filtering using unified indices"""
+        state = batch[OBS_STATE]
+        
+        if self.config.use_extended_dim:
+            # Use proper joint filtering if state_indices are provided
+            if hasattr(self.config, 'state_indices') and self.config.state_indices is not None:
+                # Filter using specific joint indices - UNIFIED ACROSS ALL MODELS
+                state = state[..., self.config.state_indices]
+                return state
+            else:
+                # Fallback: Filter state dimensions if needed (for RLWRLD allex_gesture_easy_pos_vel_torq dataset)
+                # Original dataset has 180 dims: [pos(60) + vel(60) + torque(60)]
+                # ext_state_dim determines which parts to use:
+                # - 60: position only
+                # - 120: position + velocity  
+                # - 180: position + velocity + torque (full)
+                if state.shape[-1] == 180 and self.config.ext_state_dim < 180:
+                    state = state[..., :self.config.ext_state_dim]
+                
+                return state
+        
+        # Default behavior - PI0_FAST uses max_state_dim=32 by default
+        if state.shape[-1] > self.config.max_state_dim:
+            state = state[..., :self.config.max_state_dim]
+        
+        return state
+
+    def prepare_action(self, batch):
+        """Prepare action with proper joint filtering using unified indices"""
+        actions = batch[ACTION]
+        
+        if self.config.use_extended_dim:
+            # Use proper joint filtering if action_indices are provided
+            if hasattr(self.config, 'action_indices') and self.config.action_indices is not None:
+                # Filter using specific joint indices - UNIFIED ACROSS ALL MODELS
+                actions = actions[..., self.config.action_indices]
+                return actions
+            else:
+                # Fallback: Filter action dimensions if needed (for RLWRLD allex_gesture_easy_pos_vel_torq dataset)
+                # Original dataset has 42 dims for dual_arm, but some ablations use 21 dims for right_arm
+                if actions.shape[-1] == 42 and self.config.ext_action_dim < 42:
+                    actions = actions[..., :self.config.ext_action_dim]
+                
+                return actions
+        
+        # Default behavior - PI0_FAST uses max_action_dim=32 by default
+        if actions.shape[-1] > self.config.max_action_dim:
+            actions = actions[..., :self.config.max_action_dim]
+        
+        return actions
 
 
 def block_causal_update_causal_mask(
@@ -408,9 +462,13 @@ class PI0FAST(nn.Module):
         self.fast_skip_tokens = self.config.fast_skip_tokens
         self.max_input_seq_len = self.config.max_input_seq_len
         self.action_horizon = self.config.chunk_size
-        self.action_dim = self.config.action_feature.shape[
-            0
-        ]  # self.config.max_action_dim  # self.config.action_feature.shape[0]
+        
+        # Set action_dim based on use_extended_dim
+        if self.config.use_extended_dim:
+            self.action_dim = self.config.ext_action_dim
+        else:
+            self.action_dim = self.config.action_feature.shape[0]
+            
         precision = config.precision
         torch_precision = PRECISION.get(precision, torch.float32)
         self.pad_token_id = (
@@ -472,7 +530,13 @@ class PI0FAST(nn.Module):
                 param.data = param.data.to(dtype=torch_precision)
         self.set_requires_grad()
         self.image_keys = self.config.image_features.keys()
+        
+        # Fix ignore_index attribute issue
+        if hasattr(self.pi0_paligemma.config, 'ignore_index'):
         self.ignore_index = self.pi0_paligemma.config.ignore_index
+        else:
+            self.ignore_index = -100  # Default value for ignore_index
+            
         self.padding_side = self.config.padding_side
 
     def set_requires_grad(self):
@@ -568,7 +632,12 @@ class PI0FAST(nn.Module):
         device = state.device
         bins = torch.linspace(-1, 1, 256 + 1, device=device)[:-1]
         discretized = torch.bucketize(state, bins) - 1
-        discretized = discretized[:, :32]
+        
+        # Use extended state dimension or fallback to max_state_dim
+        if self.config.use_extended_dim:
+            discretized = discretized[:, :self.config.ext_state_dim]
+        else:
+            discretized = discretized[:, :self.config.max_state_dim]
 
         prefix_texts = []
         state_text = []
@@ -587,9 +656,16 @@ class PI0FAST(nn.Module):
 
         if actions is not None:
             actions_norm = self.normalize_actions(actions)
+            
+            # Use extended action dimension or fallback to max_action_dim
+            if self.config.use_extended_dim:
+                max_action_dim = self.config.ext_action_dim
+            else:
+                max_action_dim = self.config.max_action_dim
+                
             actions_pad = F.pad(
-                actions_norm, (0, max(0, self.config.max_action_dim - actions_norm.shape[2])), value=0
-            )[:, :, : self.config.max_action_dim]
+                actions_norm, (0, max(0, max_action_dim - actions_norm.shape[2])), value=0
+            )[:, :, :max_action_dim]
             fast_out = self.fast_tokenizer_wrapper(
                 actions_pad.cpu(),
             )
@@ -676,7 +752,7 @@ class PI0FAST(nn.Module):
 
         return new_tokens, new_ar_masks, new_padding_mask, new_loss_mask, new_targets, new_token_type_ids
 
-    def forward(self, batch: dict[str, Tensor]):
+    def forward(self, batch: dict[str, Tensor]) -> tuple[Tensor, dict[str, Tensor]]:
         device = batch[OBS_STATE].device
         # TODO: keep like this or move to the policy .forward
         images, img_masks = self.prepare_images(batch)

@@ -1,0 +1,203 @@
+=== UNIFIED LOG FOR 30_PERCENT_POS_ONLY_RIGHT_ARM_ROBOT_VIEW ===
+Generated at: Tue Jul 15 08:54:43 KST 2025
+Job ID: 3036
+
+=== UNIFIED LOG FOR 30_PERCENT_POS_ONLY_RIGHT_ARM_ROBOT_VIEW ===
+Generated at: Tue Jul 15 08:54:43 KST 2025
+Job ID: 3036
+
+==================================================
+ENVIRONMENT CHECK
+==================================================
+Available conda environments:
+
+# conda environments:
+#
+base                 * /virtual_lab/rlwrld/david/miniconda3
+conversion_env         /virtual_lab/rlwrld/david/miniconda3/envs/conversion_env
+gr00t                  /virtual_lab/rlwrld/david/miniconda3/envs/gr00t
+lerobot                /virtual_lab/rlwrld/david/miniconda3/envs/lerobot
+openpi_env             /virtual_lab/rlwrld/david/miniconda3/envs/openpi_env
+univla_train           /virtual_lab/rlwrld/david/miniconda3/envs/univla_train
+
+
+Activating lerobot environment...
+
+Current Python path:
+/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/bin/python
+
+Python version:
+Python 3.13.5
+
+==================================================
+STEP 1: DATA PREPARATION (Already available)
+==================================================
+Data source: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq
+Dataset: 30_percent_pos_only_right_arm_robot_view
+Status: ✅ SUCCESS (Data already available)
+
+==================================================
+STEP 2: TRAINING
+==================================================
+Command: cd pi0 && python lerobot/scripts/train.py --dataset.repo_id=RLWRLD/30_percent_pos_only_right_arm_robot_view --policy.path=lerobot/pi0 --output_dir=./outputs/job_3036_pi0_30_percent_pos_only_right_arm_robot_view --steps=5000 --batch_size=24 --seed=1000 --save_freq=1000 --num_workers=8
+Starting training...
+
+INFO 2025-07-15 08:55:00 ts/train.py:111 {'batch_size': 24,
+ 'dataset': {'episodes': None,
+             'image_transforms': {'enable': False,
+                                  'max_num_transforms': 3,
+                                  'random_order': False,
+                                  'tfs': {'brightness': {'kwargs': {'brightness': [0.8,
+                                                                                   1.2]},
+                                                         'type': 'ColorJitter',
+                                                         'weight': 1.0},
+                                          'contrast': {'kwargs': {'contrast': [0.8,
+                                                                               1.2]},
+                                                       'type': 'ColorJitter',
+                                                       'weight': 1.0},
+                                          'hue': {'kwargs': {'hue': [-0.05,
+                                                                     0.05]},
+                                                  'type': 'ColorJitter',
+                                                  'weight': 1.0},
+                                          'saturation': {'kwargs': {'saturation': [0.5,
+                                                                                   1.5]},
+                                                         'type': 'ColorJitter',
+                                                         'weight': 1.0},
+                                          'sharpness': {'kwargs': {'sharpness': [0.5,
+                                                                                 1.5]},
+                                                        'type': 'SharpnessJitter',
+                                                        'weight': 1.0}}},
+             'repo_id': 'RLWRLD/30_percent_pos_only_right_arm_robot_view',
+             'revision': None,
+             'root': None,
+             'use_imagenet_stats': True,
+             'video_backend': 'torchcodec'},
+ 'env': None,
+ 'eval': {'batch_size': 50, 'n_episodes': 50, 'use_async_envs': False},
+ 'eval_freq': 20000,
+ 'job_name': 'pi0',
+ 'log_freq': 200,
+ 'num_workers': 8,
+ 'optimizer': {'betas': [0.9, 0.95],
+               'eps': 1e-08,
+               'grad_clip_norm': 10.0,
+               'lr': 2.5e-05,
+               'type': 'adamw',
+               'weight_decay': 1e-10},
+ 'output_dir': 'outputs/job_3036_pi0_30_percent_pos_only_right_arm_robot_view',
+ 'policy': {'action_indices': None,
+            'adapt_to_pi_aloha': False,
+            'attention_implementation': 'eager',
+            'chunk_size': 50,
+            'device': 'cuda',
+            'empty_cameras': 0,
+            'ext_action_dim': 42,
+            'ext_state_dim': 180,
+            'freeze_vision_encoder': True,
+            'input_features': {},
+            'max_action_dim': 32,
+            'max_state_dim': 32,
+            'n_action_steps': 50,
+            'n_obs_steps': 1,
+            'normalization_mapping': {'ACTION': <NormalizationMode.MEAN_STD: 'MEAN_STD'>,
+                                      'STATE': <NormalizationMode.MEAN_STD: 'MEAN_STD'>,
+                                      'VISUAL': <NormalizationMode.IDENTITY: 'IDENTITY'>},
+            'num_steps': 10,
+            'optimizer_betas': [0.9, 0.95],
+            'optimizer_eps': 1e-08,
+            'optimizer_lr': 2.5e-05,
+            'optimizer_weight_decay': 1e-10,
+            'output_features': {},
+            'proj_width': 1024,
+            'resize_imgs_with_padding': [224, 224],
+            'scheduler_decay_lr': 2.5e-06,
+            'scheduler_decay_steps': 30000,
+            'scheduler_warmup_steps': 1000,
+            'state_indices': None,
+            'tokenizer_max_length': 48,
+            'train_expert_only': False,
+            'train_state_proj': True,
+            'type': 'pi0',
+            'use_amp': False,
+            'use_cache': True,
+            'use_delta_joint_actions_aloha': False,
+            'use_extended_dim': True},
+ 'resume': False,
+ 'save_checkpoint': True,
+ 'save_freq': 1000,
+ 'scheduler': {'decay_lr': 2.5e-06,
+               'num_decay_steps': 30000,
+               'num_warmup_steps': 1000,
+               'peak_lr': 2.5e-05,
+               'type': 'cosine_decay_with_warmup'},
+ 'seed': 1000,
+ 'steps': 5000,
+ 'use_policy_training_preset': True,
+ 'wandb': {'disable_artifact': False,
+           'enable': False,
+           'entity': None,
+           'mode': None,
+           'notes': None,
+           'project': 'lerobot',
+           'run_id': None}}
+INFO 2025-07-15 08:55:00 ts/train.py:117 Logs will be saved locally.
+INFO 2025-07-15 08:55:00 ts/train.py:127 Creating dataset
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/common/datasets/lerobot_dataset.py", line 476, in __init__
+    assert all((self.root / fpath).is_file() for fpath in self.get_episodes_file_paths())
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/huggingface_hub/utils/_http.py", line 409, in hf_raise_for_status
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://huggingface.co/api/datasets/RLWRLD/30_percent_pos_only_right_arm_robot_view/refs
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/scripts/train.py", line 288, in <module>
+    train()
+    ~~~~~^^
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/configs/parser.py", line 226, in wrapper_inner
+    response = fn(cfg, *args, **kwargs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/scripts/train.py", line 128, in train
+    dataset = make_dataset(cfg)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/common/datasets/factory.py", line 90, in make_dataset
+    dataset = LeRobotDataset(
+        cfg.dataset.repo_id,
+    ...<5 lines>...
+        video_backend=cfg.dataset.video_backend,
+    )
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/common/datasets/lerobot_dataset.py", line 479, in __init__
+    self.revision = get_safe_version(self.repo_id, self.revision)
+                    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/common/datasets/utils.py", line 327, in get_safe_version
+    hub_versions = get_repo_versions(repo_id)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/common/datasets/utils.py", line 309, in get_repo_versions
+    repo_refs = api.list_repo_refs(repo_id, repo_type="dataset")
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/huggingface_hub/hf_api.py", line 3228, in list_repo_refs
+    hf_raise_for_status(response)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/huggingface_hub/utils/_http.py", line 459, in hf_raise_for_status
+    raise _format(RepositoryNotFoundError, message, response) from e
+huggingface_hub.errors.RepositoryNotFoundError: 404 Client Error. (Request ID: Root=1-68759910-74f750be349abcd444e08796;f86b7523-ac87-4ea0-ac03-b87b99fa20fa)
+
+Repository Not Found for url: https://huggingface.co/api/datasets/RLWRLD/30_percent_pos_only_right_arm_robot_view/refs.
+Please make sure you specified the correct `repo_id` and `repo_type`.
+If you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication
+
+==================================================
+SUMMARY
+==================================================
+Data preparation: ✅ SUCCESS
+Training: ❌ FAILED
+Overall: ❌ FAILED
+==================================================

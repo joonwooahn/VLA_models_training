@@ -1,0 +1,19 @@
+{"time":"2025-07-11T23:37:45.435103693+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-11T23:37:45.435115621+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250711_233745-4sp8rccs/logs/debug-core.log"}
+{"time":"2025-07-11T23:37:45.436627956+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-11T23:37:45.436634535+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250711_233745-4sp8rccs/logs/debug-core.log"}
+{"time":"2025-07-11T23:37:45.447172427+09:00","level":"INFO","msg":"created new stream","id":"4sp8rccs"}
+{"time":"2025-07-11T23:37:45.447194664+09:00","level":"INFO","msg":"stream: started","id":"4sp8rccs"}
+{"time":"2025-07-11T23:37:45.447211878+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"4sp8rccs"}}
+{"time":"2025-07-11T23:37:45.447217076+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"4sp8rccs"}}
+{"time":"2025-07-11T23:37:45.447269593+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"4sp8rccs"}}
+{"time":"2025-07-11T23:37:45.873780713+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-11T23:37:45.883126085+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-11T23:56:53.679265664+09:00","level":"INFO","msg":"stream: closing","id":"4sp8rccs"}
+{"time":"2025-07-11T23:56:53.67959802+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-11T23:56:53.681999122+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-11T23:56:55.071832652+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"4sp8rccs"}}
+{"time":"2025-07-11T23:56:55.071861652+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"4sp8rccs"}}
+{"time":"2025-07-11T23:56:55.071918214+09:00","level":"ERROR","msg":"runfiles: CreateRunFiles returned error: api: failed sending: POST https://api.wandb.ai/graphql giving up after 1 attempt(s): context canceled"}
+{"time":"2025-07-11T23:56:55.071987455+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"4sp8rccs"}}
+{"time":"2025-07-11T23:56:55.073657075+09:00","level":"INFO","msg":"stream: closed","id":"4sp8rccs"}

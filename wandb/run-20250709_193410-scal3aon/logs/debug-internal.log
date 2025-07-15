@@ -1,0 +1,18 @@
+{"time":"2025-07-09T19:34:11.00144713+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T19:34:11.001463341+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_193410-scal3aon/logs/debug-core.log"}
+{"time":"2025-07-09T19:34:11.002033639+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T19:34:11.002042392+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_193410-scal3aon/logs/debug-core.log"}
+{"time":"2025-07-09T19:34:11.006293667+09:00","level":"INFO","msg":"created new stream","id":"scal3aon"}
+{"time":"2025-07-09T19:34:11.006325361+09:00","level":"INFO","msg":"stream: started","id":"scal3aon"}
+{"time":"2025-07-09T19:34:11.006336133+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"scal3aon"}}
+{"time":"2025-07-09T19:34:11.00638359+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"scal3aon"}}
+{"time":"2025-07-09T19:34:11.006352342+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"scal3aon"}}
+{"time":"2025-07-09T19:34:11.742273183+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-09T19:34:11.744798259+09:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-09T19:35:40.992866841+09:00","level":"INFO","msg":"stream: closing","id":"scal3aon"}
+{"time":"2025-07-09T19:35:40.993094872+09:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-09T19:35:40.994330636+09:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-09T19:35:44.35791213+09:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"scal3aon"}}
+{"time":"2025-07-09T19:35:44.35796687+09:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"scal3aon"}}
+{"time":"2025-07-09T19:35:44.35795664+09:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"scal3aon"}}
+{"time":"2025-07-09T19:35:44.360073244+09:00","level":"INFO","msg":"stream: closed","id":"scal3aon"}

@@ -1,0 +1,11 @@
+{"time":"2025-07-09T20:11:49.148906664+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T20:11:49.148921373+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_201149-np80i5x5/logs/debug-core.log"}
+{"time":"2025-07-09T20:11:49.149925296+09:00","level":"INFO","msg":"using version","core version":"0.18.0"}
+{"time":"2025-07-09T20:11:49.149930381+09:00","level":"INFO","msg":"created symlink","path":"/virtual_lab/rlwrld/david/VLA_models_training/wandb/run-20250709_201149-np80i5x5/logs/debug-core.log"}
+{"time":"2025-07-09T20:11:49.155620575+09:00","level":"INFO","msg":"created new stream","id":"np80i5x5"}
+{"time":"2025-07-09T20:11:49.155650039+09:00","level":"INFO","msg":"stream: started","id":"np80i5x5"}
+{"time":"2025-07-09T20:11:49.155669282+09:00","level":"INFO","msg":"handler: started","stream_id":{"value":"np80i5x5"}}
+{"time":"2025-07-09T20:11:49.155729983+09:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"np80i5x5"}}
+{"time":"2025-07-09T20:11:49.15577321+09:00","level":"INFO","msg":"sender: started","stream_id":{"value":"np80i5x5"}}
+{"time":"2025-07-09T20:11:49.526572808+09:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-07-09T20:11:49.544875484+09:00","level":"INFO","msg":"Starting system monitor"}

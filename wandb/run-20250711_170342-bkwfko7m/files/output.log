@@ -1,0 +1,21 @@
+  0%|          | 0/10000 [00:00<?, ?it/s]/virtual_lab/rlwrld/david/VLA_models_training/gr00t/gr00t/model/action_head/cross_attention_dit.py:281: FutureWarning: Accessing config attribute `interleave_self_attention` directly via 'DiT' object attribute is deprecated. Please access 'interleave_self_attention' over 'DiT's config object instead, e.g. 'unet.config.interleave_self_attention'.
+  if idx % 2 == 1 and self.interleave_self_attention:
+Could not estimate the number of tokens of the input, floating-point operations will not be computed
+  2%|▏         | 177/10000 [01:31<1:21:28,  2.01it/s]
+{'loss': 31202279738572.8, 'grad_norm': 76292488.0, 'learning_rate': 1.8e-06, 'epoch': 0.0}
+{'loss': 35039101530931.2, 'grad_norm': 76350472.0, 'learning_rate': 3.8e-06, 'epoch': 0.01}
+{'loss': 31704760713216.0, 'grad_norm': 53666888.0, 'learning_rate': 5.8e-06, 'epoch': 0.01}
+{'loss': 28444481237811.2, 'grad_norm': 52835308.0, 'learning_rate': 7.8e-06, 'epoch': 0.02}
+{'loss': 29177541558272.0, 'grad_norm': 81225192.0, 'learning_rate': 9.800000000000001e-06, 'epoch': 0.02}
+{'loss': 32321789807820.8, 'grad_norm': 84364712.0, 'learning_rate': 1.18e-05, 'epoch': 0.03}
+{'loss': 32690945602355.2, 'grad_norm': 104258312.0, 'learning_rate': 1.3800000000000002e-05, 'epoch': 0.03}
+{'loss': 32074822477414.4, 'grad_norm': 119426928.0, 'learning_rate': 1.58e-05, 'epoch': 0.04}
+{'loss': 29406654575411.2, 'grad_norm': 126149800.0, 'learning_rate': 1.78e-05, 'epoch': 0.04}
+{'loss': 32910770752716.8, 'grad_norm': 228038128.0, 'learning_rate': 1.9800000000000004e-05, 'epoch': 0.05}
+{'loss': 35129604544921.6, 'grad_norm': 342115744.0, 'learning_rate': 2.18e-05, 'epoch': 0.05}
+{'loss': 33534480534732.8, 'grad_norm': 652350080.0, 'learning_rate': 2.38e-05, 'epoch': 0.06}
+{'loss': 32130532900864.0, 'grad_norm': 644233728.0, 'learning_rate': 2.58e-05, 'epoch': 0.06}
+{'loss': 28657085474406.4, 'grad_norm': 1524965120.0, 'learning_rate': 2.7800000000000005e-05, 'epoch': 0.07}
+{'loss': 30376629318451.2, 'grad_norm': 1413044480.0, 'learning_rate': 2.98e-05, 'epoch': 0.07}
+{'loss': 31586847083724.8, 'grad_norm': 3882353152.0, 'learning_rate': 3.18e-05, 'epoch': 0.08}
+{'loss': 31500598771712.0, 'grad_norm': 5379017728.0, 'learning_rate': 3.38e-05, 'epoch': 0.08}

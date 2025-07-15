@@ -1,0 +1,56 @@
+✅ Conda environment 'univla_train' activated.
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld.py", line 16, in <module>
+    from accelerate import PartialState, Accelerator
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/accelerate/__init__.py", line 16, in <module>
+    from .accelerator import Accelerator
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/accelerate/accelerator.py", line 36, in <module>
+    from .checkpointing import load_accelerator_state, load_custom_state, save_accelerator_state, save_custom_state
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/accelerate/checkpointing.py", line 24, in <module>
+    from .utils import (
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/accelerate/utils/__init__.py", line 202, in <module>
+    from .megatron_lm import (
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/accelerate/utils/megatron_lm.py", line 33, in <module>
+    from transformers.modeling_outputs import (
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/__init__.py", line 26, in <module>
+    from . import dependency_versions_check
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/dependency_versions_check.py", line 57, in <module>
+    require_version_core(deps[pkg])
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/utils/versions.py", line 117, in require_version_core
+    return require_version(requirement, hint)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/utils/versions.py", line 111, in require_version
+    _compare_versions(op, got_ver, want_ver, requirement, pkg, hint)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/transformers/utils/versions.py", line 44, in _compare_versions
+    raise ImportError(
+ImportError: tokenizers>=0.19,<0.20 is required for a normal functioning of this module, but found tokenizers==0.21.2.
+Try: `pip install transformers -U` or `pip install -e '.[dev]'` if you're working with git main
+[2025-07-04 15:41:15,228] torch.distributed.elastic.multiprocessing.api: [ERROR] failed (exitcode: 1) local_rank: 0 (pid: 3378418) of binary: /virtual_lab/rlwrld/david/miniconda3/envs/univla_train/bin/python
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/bin/torchrun", line 33, in <module>
+    sys.exit(load_entry_point('torch==2.2.0', 'console_scripts', 'torchrun')())
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 347, in wrapper
+    return f(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/run.py", line 812, in main
+    run(args)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/run.py", line 803, in run
+    elastic_launch(
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 135, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/univla_train/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 268, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+finetune_rlwrld.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-07-04_15:41:15
+  host      : worker-node12
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 3378418)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

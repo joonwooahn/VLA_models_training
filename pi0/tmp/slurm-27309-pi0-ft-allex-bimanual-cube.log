@@ -1,0 +1,159 @@
+✅ Conda environment 'lerobot' activated.
+INFO 2025-07-04 11:13:51 ts/train.py:111 {'batch_size': 36,
+ 'dataset': {'episodes': None,
+             'image_transforms': {'enable': False,
+                                  'max_num_transforms': 3,
+                                  'random_order': False,
+                                  'tfs': {'brightness': {'kwargs': {'brightness': [0.8,
+                                                                                   1.2]},
+                                                         'type': 'ColorJitter',
+                                                         'weight': 1.0},
+                                          'contrast': {'kwargs': {'contrast': [0.8,
+                                                                               1.2]},
+                                                       'type': 'ColorJitter',
+                                                       'weight': 1.0},
+                                          'hue': {'kwargs': {'hue': [-0.05,
+                                                                     0.05]},
+                                                  'type': 'ColorJitter',
+                                                  'weight': 1.0},
+                                          'saturation': {'kwargs': {'saturation': [0.5,
+                                                                                   1.5]},
+                                                         'type': 'ColorJitter',
+                                                         'weight': 1.0},
+                                          'sharpness': {'kwargs': {'sharpness': [0.5,
+                                                                                 1.5]},
+                                                        'type': 'SharpnessJitter',
+                                                        'weight': 1.0}}},
+             'repo_id': 'RLWRLD/allex_cube',
+             'revision': None,
+             'root': None,
+             'use_imagenet_stats': True,
+             'video_backend': 'torchcodec'},
+ 'env': None,
+ 'eval': {'batch_size': 50, 'n_episodes': 50, 'use_async_envs': False},
+ 'eval_freq': 20000,
+ 'job_name': 'pi0-ft-allex-bimanual-cube',
+ 'log_freq': 200,
+ 'num_workers': 4,
+ 'optimizer': {'betas': [0.9, 0.95],
+               'eps': 1e-08,
+               'grad_clip_norm': 10.0,
+               'lr': 2.5e-05,
+               'type': 'adamw',
+               'weight_decay': 1e-10},
+ 'output_dir': 'outputs/train/2025-07-04/11-13-51_pi0-ft-allex-bimanual-cube',
+ 'policy': {'adapt_to_pi_aloha': False,
+            'attention_implementation': 'eager',
+            'chunk_size': 50,
+            'device': 'cuda',
+            'empty_cameras': 0,
+            'ext_action_dim': 42,
+            'ext_state_dim': 60,
+            'freeze_vision_encoder': True,
+            'input_features': {},
+            'max_action_dim': 32,
+            'max_state_dim': 32,
+            'n_action_steps': 50,
+            'n_obs_steps': 1,
+            'normalization_mapping': {'ACTION': <NormalizationMode.MEAN_STD: 'MEAN_STD'>,
+                                      'STATE': <NormalizationMode.MEAN_STD: 'MEAN_STD'>,
+                                      'VISUAL': <NormalizationMode.IDENTITY: 'IDENTITY'>},
+            'num_steps': 10,
+            'optimizer_betas': [0.9, 0.95],
+            'optimizer_eps': 1e-08,
+            'optimizer_lr': 2.5e-05,
+            'optimizer_weight_decay': 1e-10,
+            'output_features': {},
+            'proj_width': 1024,
+            'resize_imgs_with_padding': [224, 224],
+            'scheduler_decay_lr': 2.5e-06,
+            'scheduler_decay_steps': 30000,
+            'scheduler_warmup_steps': 1000,
+            'tokenizer_max_length': 48,
+            'train_expert_only': False,
+            'train_state_proj': True,
+            'type': 'pi0',
+            'use_amp': False,
+            'use_cache': True,
+            'use_delta_joint_actions_aloha': False,
+            'use_extended_dim': True},
+ 'resume': False,
+ 'save_checkpoint': True,
+ 'save_freq': 20000,
+ 'scheduler': {'decay_lr': 2.5e-06,
+               'num_decay_steps': 30000,
+               'num_warmup_steps': 1000,
+               'peak_lr': 2.5e-05,
+               'type': 'cosine_decay_with_warmup'},
+ 'seed': 1000,
+ 'steps': 30000,
+ 'use_policy_training_preset': True,
+ 'wandb': {'disable_artifact': True,
+           'enable': True,
+           'entity': None,
+           'mode': None,
+           'notes': None,
+           'project': 'lerobot',
+           'run_id': None}}
+INFO 2025-07-04 11:14:05 db_utils.py:103 Track this run --> https://wandb.ai/gerald-kim-rlwrld/lerobot/runs/oueus7j5
+INFO 2025-07-04 11:14:05 ts/train.py:127 Creating dataset
+INFO 2025-07-04 11:14:09 ts/train.py:138 Creating policy
+INFO 2025-07-04 11:17:20 ts/train.py:144 Creating optimizer and scheduler
+INFO 2025-07-04 11:17:20 ts/train.py:156 Output dir: outputs/train/2025-07-04/11-13-51_pi0-ft-allex-bimanual-cube
+INFO 2025-07-04 11:17:20 ts/train.py:159 cfg.steps=30000 (30K)
+INFO 2025-07-04 11:17:20 ts/train.py:160 dataset.num_frames=13334 (13K)
+INFO 2025-07-04 11:17:20 ts/train.py:161 dataset.num_episodes=2
+INFO 2025-07-04 11:17:20 ts/train.py:162 num_learnable_params=3088934538 (3B)
+INFO 2025-07-04 11:17:20 ts/train.py:163 num_total_params=3501377178 (4B)
+INFO 2025-07-04 11:17:20 ts/train.py:202 Start offline training on a fixed dataset
+Logs will be synced with wandb.
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/scripts/train.py", line 288, in <module>
+    train()
+    ~~~~~^^
+  File "/virtual_lab/rlwrld/david/pi0_neo/lerobot_research/lerobot/configs/parser.py", line 226, in wrapper_inner
+    response = fn(cfg, *args, **kwargs)
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/scripts/train.py", line 212, in train
+    train_tracker, output_dict = update_policy(
+                                 ~~~~~~~~~~~~~^
+        train_tracker,
+        ^^^^^^^^^^^^^^
+    ...<6 lines>...
+        use_amp=cfg.policy.use_amp,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/virtual_lab/rlwrld/david/VLA_models_training/pi0/lerobot/scripts/train.py", line 71, in update_policy
+    loss, output_dict = policy.forward(batch)
+                        ~~~~~~~~~~~~~~^^^^^^^
+  File "/virtual_lab/rlwrld/david/pi0_neo/lerobot_research/lerobot/common/policies/pi0/modeling_pi0.py", line 319, in forward
+    losses = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
+  File "/virtual_lab/rlwrld/david/pi0_neo/lerobot_research/lerobot/common/policies/pi0/modeling_pi0.py", line 650, in forward
+    (_, suffix_out), _ = self.paligemma_with_expert.forward(
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        attention_mask=att_2d_masks,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        fill_kv_cache=False,
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/virtual_lab/rlwrld/david/pi0_neo/lerobot_research/lerobot/common/policies/pi0/paligemma_with_expert.py", line 329, in forward
+    out_emb = layer.mlp(out_emb)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/transformers/models/gemma/modeling_gemma.py", line 99, in forward
+    down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+                               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/virtual_lab/rlwrld/david/miniconda3/envs/lerobot/lib/python3.13/site-packages/transformers/activations.py", line 46, in forward
+    return nn.functional.gelu(input, approximate="tanh")
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 630.00 MiB. GPU 0 has a total capacity of 79.14 GiB of which 338.75 MiB is free. Including non-PyTorch memory, this process has 78.79 GiB memory in use. Of the allocated memory 77.41 GiB is allocated by PyTorch, and 905.99 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

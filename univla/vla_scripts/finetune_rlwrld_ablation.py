@@ -50,51 +50,7 @@ from latent_action_model.genie.modules.lam import ControllableDINOLatentActionMo
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-def get_ablation_config(condition):
-    """Get configuration based on ablation condition"""
-    # 기본 설정
-    config = {
-        "data_dir": "./converted_data",
-        "state_indices": [],
-        "action_indices": [],
-        "state_dim": 0,
-        "action_dim": 0,
-        "checkout_name": condition.name
-    }
-    
-    # State configuration
-    if condition.state_type == StateType.POSITION_ONLY:
-        # Position only
-        if condition.action_type == ActionType.SINGLE_ARM:
-            # 몸 + 오른팔 + 오른손 (position only)
-            config["state_indices"] = list(range(0, 3)) + list(range(5, 12)) + list(range(19, 40))
-            config["action_indices"] = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-        else:  # BIMANUAL
-            # 몸 + 양팔 + 양손 (position only)
-            config["state_indices"] = list(range(0, 3)) + list(range(5, 19)) + list(range(19, 60))
-            config["action_indices"] = list(range(42))  # 전체 액션
-    else:  # FULL_STATE
-        # Position + velocity + torque
-        base_indices = []
-        if condition.action_type == ActionType.SINGLE_ARM:
-            base_indices = list(range(0, 3)) + list(range(5, 12)) + list(range(19, 40))
-        else:  # BIMANUAL
-            base_indices = list(range(0, 3)) + list(range(5, 19)) + list(range(19, 60))
-        
-        # Add velocity and torque indices (assuming they follow the position indices)
-        velocity_indices = [i + 60 for i in base_indices]
-        torque_indices = [i + 120 for i in base_indices]
-        config["state_indices"] = base_indices + velocity_indices + torque_indices
-        
-        if condition.action_type == ActionType.SINGLE_ARM:
-            config["action_indices"] = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-        else:
-            config["action_indices"] = list(range(42))
-    
-    config["state_dim"] = len(config["state_indices"])
-    config["action_dim"] = len(config["action_indices"])
-    
-    return config
+# Removed get_ablation_config() function - now using condition.get_state_dim() and condition.get_action_dim() directly
 
 
 def get_norm_stats_from_files(dataset_dir, state_indices, action_indices):
@@ -106,21 +62,9 @@ def get_norm_stats_from_files(dataset_dir, state_indices, action_indices):
         state_data = np.load(episode_path / "state.npy")
         action_data = np.load(episode_path / "action.npy")
         
-        # Apply filtering with bounds checking
-        if len(state_indices) > 0 and state_data.shape[1] > max(state_indices):
-            filtered_state = state_data[:, state_indices]
-        else:
-            print(f"⚠️  State data shape {state_data.shape} insufficient for indices {state_indices}")
-            filtered_state = state_data
-            
-        if len(action_indices) > 0 and action_data.shape[1] > max(action_indices):
-            filtered_action = action_data[:, action_indices]
-        else:
-            print(f"⚠️  Action data shape {action_data.shape} insufficient for indices {action_indices}")
-            filtered_action = action_data
-        
-        all_states.append(torch.from_numpy(filtered_state))
-        all_actions.append(torch.from_numpy(filtered_action))
+        # Since conversion already applied filtering, use all data
+        all_states.append(torch.from_numpy(state_data))
+        all_actions.append(torch.from_numpy(action_data))
     
     all_states_tensor = torch.cat(all_states, dim=0)
     all_actions_tensor = torch.cat(all_actions, dim=0)
@@ -128,10 +72,18 @@ def get_norm_stats_from_files(dataset_dir, state_indices, action_indices):
     # State 정규화
     state_mean = all_states_tensor.mean(dim=0, keepdim=True)
     state_std = all_states_tensor.std(dim=0, keepdim=True)
+    # Add epsilon to prevent division by zero
+    state_std = torch.clamp(state_std, min=1e-8)
     
     # Action 정규화
     action_mean = all_actions_tensor.mean(dim=0, keepdim=True)
     action_std = all_actions_tensor.std(dim=0, keepdim=True)
+    # Add epsilon to prevent division by zero and print warning for zero std dimensions
+    zero_std_mask = action_std < 1e-8
+    if zero_std_mask.any():
+        zero_dims = torch.where(zero_std_mask)[1].tolist()
+        print(f"⚠️  Warning: Action dimensions {zero_dims} have zero or very small std. Setting to 1e-8 to prevent NaN.")
+    action_std = torch.clamp(action_std, min=1e-8)
     
     stats = {
         "state_mean": state_mean.numpy().squeeze().tolist(),
@@ -151,7 +103,16 @@ class ManualDataset(torch.utils.data.Dataset):
         self.action_indices = action_indices
         self.image_transform = image_transform
         self.episodes = []
+
+        ###
         print(f"Loading episode info from {root_dir}...")
+        for episode_path in tqdm.tqdm(sorted([p for p in self.root_dir.iterdir() if p.is_dir()])):
+            episode_len = len(np.load(episode_path / "action.npy"))
+            if episode_len > window_size:
+                self.episodes.append({'path': episode_path, 'len': episode_len})
+        self.resize_img = transforms.Resize((224, 224))
+        ###
+
         for episode_path in tqdm.tqdm(sorted([p for p in self.root_dir.iterdir() if p.is_dir()])):
             action_file = episode_path / "action.npy"
             if action_file.exists():
@@ -167,57 +128,26 @@ class ManualDataset(torch.utils.data.Dataset):
         episode_path = episode_info['path']
         episode_len = episode_info['len']
 
-        start_idx = random.randint(0, episode_len - self.window_size - 1)
-        end_idx = start_idx + self.window_size
+        extra_frame_num = random.randint(0, 1)
+        image_index = np.random.choice(episode_len - self.window_size - extra_frame_num) + 1 # filename starts from 001
+
+        # start_idx = random.randint(0, episode_len - self.window_size - 1)
+        # end_idx = start_idx + self.window_size
+        start_idx = image_index + extra_frame_num
+        end_idx = image_index + self.window_size + extra_frame_num
         
-        # Load and filter state
+        # Load state (already filtered during conversion)
         full_state = np.load(episode_path / "state.npy")[start_idx]
-        
-        # Apply filtering with bounds checking
-        if len(self.state_indices) > 0 and len(full_state) > max(self.state_indices):
-            state_filtered = full_state[self.state_indices]
-        else:
-            # If indices are out of bounds, use available data
-            available_indices = [idx for idx in self.state_indices if idx < len(full_state)]
-            if available_indices:
-                state_filtered = full_state[available_indices]
-            else:
-                state_filtered = full_state
-                
         state_mean = np.array(self.norm_stats["state_mean"])
         state_std = np.array(self.norm_stats["state_std"])
-        
-        # Ensure dimensions match
-        if len(state_filtered) != len(state_mean):
-            state_mean = state_mean[:len(state_filtered)]
-            state_std = state_std[:len(state_filtered)]
-            
-        state_normalized = (state_filtered - state_mean) / state_std
+        state_normalized = (full_state - state_mean) / state_std
         states_tensor = torch.from_numpy(state_normalized).float()
 
-        # Load and filter actions
+        # Load actions (already filtered during conversion)
         full_actions = np.load(episode_path / "action.npy")[start_idx:end_idx]
-        
-        # Apply filtering with bounds checking
-        if len(self.action_indices) > 0 and full_actions.shape[1] > max(self.action_indices):
-            actions_filtered = full_actions[:, self.action_indices]
-        else:
-            # If indices are out of bounds, use available data
-            available_indices = [idx for idx in self.action_indices if idx < full_actions.shape[1]]
-            if available_indices:
-                actions_filtered = full_actions[:, available_indices]
-            else:
-                actions_filtered = full_actions
-                
         action_mean = np.array(self.norm_stats["action_mean"])
         action_std = np.array(self.norm_stats["action_std"])
-        
-        # Ensure dimensions match
-        if actions_filtered.shape[1] != len(action_mean):
-            action_mean = action_mean[:actions_filtered.shape[1]]
-            action_std = action_std[:actions_filtered.shape[1]]
-            
-        actions_normalized = (actions_filtered - action_mean) / action_std
+        actions_normalized = (full_actions - action_mean) / action_std
         actions_tensor = torch.from_numpy(actions_normalized).float()
 
         # Load instruction
@@ -234,20 +164,44 @@ class ManualDataset(torch.utils.data.Dataset):
             # Fallback to different naming convention
             main_image_path = episode_path / f"image_{start_idx + 1}.png"
         
-        if main_image_path.exists():
-            pixel_values = self.image_transform(Image.open(main_image_path).convert("RGB"))
-        else:
-            # Create dummy image if not found
-            pixel_values = torch.zeros(3, 224, 224)
-
-        resize_to_224 = transforms.Resize((224, 224))
-        to_tensor = transforms.ToTensor()
-        initial_pixel_values = to_tensor(resize_to_224(Image.open(main_image_path).convert("RGB"))) if main_image_path.exists() else torch.zeros(3, 224, 224)
+        pixel_values = self.image_transform(Image.open(main_image_path).convert("RGB"))
         
-        target_frame_path = episode_path / f"frame_{end_idx:03d}.png"
-        if not target_frame_path.exists():
-            target_frame_path = episode_path / f"image_{end_idx}.png"
-        target_pixel_values = to_tensor(resize_to_224(Image.open(target_frame_path).convert("RGB"))) if target_frame_path.exists() else torch.zeros(3, 224, 224)
+        # resize_to_224 = transforms.Resize((224, 224))
+        # to_tensor = transforms.ToTensor()
+        
+        # Load initial image (current frame)
+        # if main_image_path.exists():
+        #     initial_pixel_values = to_tensor(resize_to_224(Image.open(main_image_path).convert("RGB")))
+        # else:
+        #     initial_pixel_values = torch.zeros(3, 224, 224)
+
+        # # Load target image (future frame)
+        # target_frame_path = episode_path / f"frame_{end_idx:03d}.png"
+        # if not target_frame_path.exists():
+        #     target_frame_path = episode_path / f"image_{end_idx}.png"
+        
+        # if target_frame_path.exists():
+        #     target_pixel_values = to_tensor(resize_to_224(Image.open(target_frame_path).convert("RGB")))
+        # else:
+        #     target_pixel_values = torch.zeros(3, 224, 224)
+        
+        # Concatenate initial and target images to create 6-channel pixel_values for UniVLA
+        # pixel_values_concat = torch.cat([initial_pixel_values, target_pixel_values], dim=0)  # (6, 224, 224)
+        
+        # Apply image transform to the concatenated 6-channel tensor
+        # Note: We need to handle the 6-channel input properly
+        # pixel_values = pixel_values_concat  # Use the concatenated version
+        initial_pixel_values = self.image_transform_lam(self.resize_img(Image.open(main_image_path).convert("RGB")))
+        target_frame_path = episode_path / f"frame_{end_idx-1:03d}.png"
+        target_pixel_values = self.image_transform_lam(self.resize_img(Image.open(target_frame_path).convert("RGB")))
+
+
+        initial_pixel_values_hist, target_pixel_values_hist = None, None
+        if extra_frame_num > 0:
+            hist_frame_prev = Image.open(episode_path / f"frame_{start_idx-extra_frame_num:03d}.png").convert("RGB")
+            hist_frame_goal = Image.open(episode_path / f"frame_{end_idx-1-extra_frame_num:03d}.png").convert("RGB")
+            initial_pixel_values_hist = self.image_transform_lam(self.resize_img(hist_frame_prev))
+            target_pixel_values_hist = self.image_transform_lam(self.resize_img(hist_frame_goal))
 
         return dict(
             pixel_values=pixel_values, 
@@ -256,28 +210,31 @@ class ManualDataset(torch.utils.data.Dataset):
             proprio=states_tensor,
             initial_pixel_values=initial_pixel_values, 
             target_pixel_values=target_pixel_values,
-            initial_pixel_values_hist=None, 
-            target_pixel_values_hist=None,
+            # initial_pixel_values_hist=None, 
+            # target_pixel_values_hist=None,
+            initial_pixel_values_hist=initial_pixel_values_hist, 
+            target_pixel_values_hist=target_pixel_values_hist,
             with_hist=torch.tensor(False),
         )
 
 
-def load_data_manual(dataset_dir, batch_size, processor, window_size, state_indices, action_indices):
-    norm_stats = get_norm_stats_from_files(dataset_dir, state_indices, action_indices)
+def load_data_manual(dataset_dir, batch_size, processor, window_size, num_workers=8):
+    # Empty indices since conversion already applied filtering
+    norm_stats = get_norm_stats_from_files(dataset_dir, [], [])
     dataset = ManualDataset(
         root_dir=dataset_dir, 
         norm_stats=norm_stats, 
         window_size=window_size,
-        state_indices=state_indices,
-        action_indices=action_indices,
+        state_indices=[],  # Data already filtered during conversion
+        action_indices=[], # Data already filtered during conversion
         image_transform=processor.image_processor.apply_transform,
     )
     collator = PaddedCollatorForActionPrediction(
         processor.tokenizer.model_max_length, processor.tokenizer.pad_token_id, padding_side="right"
     )
     dataloader = DataLoader(
-        dataset, batch_size=batch_size, shuffle=True, num_workers=8,
-        collate_fn=collator, pin_memory=True, persistent_workers=True if 8 > 0 else False
+        dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
+        collate_fn=collator, pin_memory=True, persistent_workers=True if num_workers > 0 else False
     )
     return dataloader, norm_stats
 
@@ -288,7 +245,7 @@ class ActionDecoderHead(torch.nn.Module):
         self.attn_pool = MAPBlock(n_latents=1, vis_dim=4096, embed_dim=hidden_dim, n_heads=hidden_dim // 64)
         self.visual_pool = MAPBlock(n_latents=1, vis_dim=4096, embed_dim=hidden_dim, n_heads=hidden_dim // 64)
         self.proprio_proj = nn.Sequential(
-            nn.Linear(len([]), hidden_dim),  # Will be set dynamically
+            nn.Linear(1, hidden_dim),  # Placeholder, will be set dynamically
             nn.GELU(),
             nn.Linear(hidden_dim, hidden_dim)
         )
@@ -368,6 +325,7 @@ class Wrapped_Model(torch.nn.Module):
         self.action_decoder = ActionDecoderHead(window_size, action_dim)
         self.action_decoder.set_state_dim(state_dim)
         self.freeze_vla = freeze_vla
+        self.window_size = window_size  # Store window_size for later use
         
         if self.freeze_vla:
             for param in self.vla.parameters():
@@ -414,7 +372,7 @@ class Wrapped_Model(torch.nn.Module):
         proprio = batch['proprio']
         
         pred_actions = self.action_decoder(latent_action_tokens, visual_embed, proprio)
-        pred_actions = pred_actions.view(pred_actions.shape[0], -1, pred_actions.shape[-1] // 8)
+        pred_actions = pred_actions.view(pred_actions.shape[0], -1, pred_actions.shape[-1] // self.window_size)
         
         gt_actions = batch['actions']
         
@@ -434,7 +392,7 @@ class Wrapped_Model(torch.nn.Module):
 @dataclass
 class FinetuneConfig:
     # Directory Paths
-    data_root_dir: Path = Path("./converted_data")
+    data_root_dir: Path = Path("./univla/converted_data")
     vla_path: str = "univla/vla_scripts/univla-7b"
     lam_path: str = "univla/vla_scripts/univla-latent-action-model/lam-stage-2.ckpt"
     dataset_name: str = "rlwrld"
@@ -476,7 +434,7 @@ class FinetuneConfig:
     run_id_note: Optional[str] = None
 
 
-def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batch_size, learning_rate):
+def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batch_size, learning_rate, save_steps=2000, num_workers=8):
     """Main training function for ablation study"""
     print(f"🚀 Starting UniVLA training for condition: {condition_name}")
     
@@ -485,8 +443,10 @@ def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batc
     if not condition:
         raise ValueError(f"Condition '{condition_name}' not found")
     
-    ablation_config = get_ablation_config(condition)
-    print(f"📊 Ablation config: {ablation_config}")
+    # Get dimensions directly from condition object
+    state_dim = condition.get_state_dim()
+    action_dim = condition.get_action_dim()
+    print(f"📊 Condition config: state_dim={state_dim}, action_dim={action_dim}, name={condition.name}")
     
     # Update configuration
     cfg = FinetuneConfig()
@@ -495,6 +455,7 @@ def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batc
     cfg.max_steps = max_steps
     cfg.batch_size = batch_size
     cfg.learning_rate = learning_rate
+    cfg.save_steps = save_steps
     cfg.run_id_note = condition_name
     
     # Setup distributed training
@@ -556,8 +517,8 @@ def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batc
     # Create wrapped model
     wrapped_model = Wrapped_Model(
         vla=vla, 
-        action_dim=ablation_config["action_dim"],
-        state_dim=ablation_config["state_dim"],
+        action_dim=action_dim,
+        state_dim=state_dim,
         freeze_vla=cfg.freeze_vla, 
         window_size=cfg.window_size
     ).to(device_id)
@@ -600,8 +561,7 @@ def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batc
         batch_size=cfg.batch_size,
         processor=processor,
         window_size=cfg.window_size,
-        state_indices=ablation_config["state_indices"],
-        action_indices=ablation_config["action_indices"]
+        num_workers=num_workers
     )
     
     # Setup directories
@@ -727,28 +687,36 @@ def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batc
                     scheduler.step()
                     progress.update()
                 
-                # Save checkpoint
-                if (gradient_step_idx + current_step) > 0 and (gradient_step_idx + current_step) % cfg.save_steps == 0:
-                    step = gradient_step_idx + current_step
+                # Optimizer step and update step count
+                if (batch_idx + 1) % cfg.grad_accumulation_steps == 0:
+                    current_step += 1
+                
+                # Save checkpoint - simplified logic
+                if current_step > 0 and current_step % cfg.save_steps == 0:
                     if distributed_state.is_main_process:
-                        print(f"💾 Saving checkpoint at step {step}")
-                        checkpoint_dir = run_dir / f"checkpoint-{step}"
+                        print(f"💾 Saving checkpoint at step {current_step}")
+                        checkpoint_dir = run_dir / f"checkpoint-{current_step}"
                         os.makedirs(checkpoint_dir, exist_ok=True)
                         
-                        if cfg.use_lora:
-                            wrapped_model.module.vla.save_pretrained(checkpoint_dir)
+                        # Handle both wrapped and unwrapped models
+                        model_to_save = wrapped_model.module if hasattr(wrapped_model, 'module') else wrapped_model
                         
-                        decoder_path = checkpoint_dir / f'action_decoder-{step}.pt'
-                        torch.save(wrapped_model.module.action_decoder.state_dict(), decoder_path)
+                        if cfg.use_lora:
+                            model_to_save.vla.save_pretrained(checkpoint_dir)
+                        
+                        decoder_path = checkpoint_dir / f'action_decoder-{current_step}.pt'
+                        torch.save(model_to_save.action_decoder.state_dict(), decoder_path)
                         processor.save_pretrained(checkpoint_dir)
+                        
+                        print(f"✅ Checkpoint saved at: {checkpoint_dir}")
                     
-                    dist.barrier()
+                    # Use accelerator's wait function instead of dist.barrier()
+                    # to handle both single and multi-GPU setups properly
+                    accelerator.wait_for_everyone()
                 
                 # Update progress
-                description = f"Step {current_step + gradient_step_idx} | Loss: {smoothened_loss:.4f} | Acc: {smoothened_accuracy:.4f}"
+                description = f"Step {current_step} | Loss: {smoothened_loss:.4f} | Acc: {smoothened_accuracy:.4f}"
                 progress.set_description(description)
-                
-                current_step = gradient_step_idx + 1 + current_step
                 if current_step >= cfg.max_steps:
                     print(f"✅ Max steps {cfg.max_steps} reached! Training completed.")
                     break
@@ -756,17 +724,40 @@ def finetune_ablation(condition_name, data_root_dir, output_dir, max_steps, batc
             if current_step >= cfg.max_steps:
                 break
     
+    # Save final checkpoint if not already saved
+    if current_step % cfg.save_steps != 0:
+        if distributed_state.is_main_process:
+            print(f"💾 Saving final checkpoint at step {current_step}")
+            checkpoint_dir = run_dir / f"checkpoint-{current_step}-final"
+            os.makedirs(checkpoint_dir, exist_ok=True)
+            
+            # Handle both wrapped and unwrapped models
+            model_to_save = wrapped_model.module if hasattr(wrapped_model, 'module') else wrapped_model
+            
+            if cfg.use_lora:
+                model_to_save.vla.save_pretrained(checkpoint_dir)
+            
+            decoder_path = checkpoint_dir / f'action_decoder-{current_step}.pt'
+            torch.save(model_to_save.action_decoder.state_dict(), decoder_path)
+            processor.save_pretrained(checkpoint_dir)
+            
+            print(f"✅ Final checkpoint saved at: {checkpoint_dir}")
+        
+        accelerator.wait_for_everyone()
+    
     print(f"🎉 Training completed for condition: {condition_name}")
 
 
 def main():
     parser = argparse.ArgumentParser(description="UniVLA Ablation Study Training")
     parser.add_argument("--condition", type=str, required=True)
-    parser.add_argument("--data-root-dir", type=str, default="./converted_data")
-    parser.add_argument("--output-dir", type=str, default="./outputs")
+    parser.add_argument("--data-root-dir", type=str, default="./univla/converted_data")
+    parser.add_argument("--output-dir", type=str, default="./univla/outputs")
     parser.add_argument("--max-steps", type=int, default=10000)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--save-steps", type=int, default=2000)
+    parser.add_argument("--num-workers", type=int, default=8)
     
     args = parser.parse_args()
     
@@ -789,7 +780,9 @@ def main():
             output_dir=args.output_dir,
             max_steps=args.max_steps,
             batch_size=args.batch_size,
-            learning_rate=args.learning_rate
+            learning_rate=args.learning_rate,
+            save_steps=args.save_steps,
+            num_workers=args.num_workers
         )
     except Exception as e:
         print(f"❌ Training failed: {str(e)}")

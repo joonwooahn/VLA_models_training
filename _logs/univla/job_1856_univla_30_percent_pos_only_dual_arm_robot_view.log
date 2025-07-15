@@ -1,0 +1,82 @@
+=== UNIFIED LOG FOR UNIVLA_30_PERCENT_POS_ONLY_DUAL_ARM_ROBOT_VIEW ===
+Generated at: Sat Jul 12 06:43:45 KST 2025
+Job ID: 1856
+
+==================================================
+STEP 1: DATA CONVERSION
+==================================================
+Command: python univla/vla_scripts/convert_lerobot_dataset_for_univla_ablation.py --condition univla_30_percent_pos_only_dual_arm_robot_view --input-dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq --output-dir ./univla/converted_data
+Starting data conversion...
+
+✅ Data conversion for condition: univla_30_percent_pos_only_dual_arm_robot_view
+📂 Input: /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_vel_torq
+📁 Output: ./univla/converted_data
+📊 Condition details:
+   - Model: univla
+   - Data: 30%
+   - State: pos_only
+   - Action: dual_arm
+   - Camera: robot_view
+   - Action dim: 42
+🔍 Found existing converted data at: univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view
+📂 55 episodes already converted
+✅ Skipping conversion (data already exists)
+🎉 Data conversion completed successfully!
+✅ Data conversion completed successfully
+Data directory: ./univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view
+
+==================================================
+STEP 2: TRAINING
+==================================================
+Command: python univla/vla_scripts/finetune_rlwrld_ablation.py --condition univla_30_percent_pos_only_dual_arm_robot_view --data-root-dir ./univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view --output-dir ./univla/outputs/job_1856_univla_univla_30_percent_pos_only_dual_arm_robot_view --max-steps 10000 --batch-size 16 --save-steps 5000
+Starting training...
+
+2025-07-12 06:43:55.841814: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2025-07-12 06:43:55.841927: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2025-07-12 06:43:55.843034: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-07-12 06:43:57.584625: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+✅ Starting training for condition: univla_30_percent_pos_only_dual_arm_robot_view
+📂 Data: ./univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view
+📁 Output: ./univla/outputs/job_1856_univla_univla_30_percent_pos_only_dual_arm_robot_view
+🔢 Steps: 10000
+📊 Batch size: 16
+📈 Learning rate: 0.0001
+🚀 Starting UniVLA training for condition: univla_30_percent_pos_only_dual_arm_robot_view
+📊 Condition config: state_dim=60, action_dim=42, name=univla_30_percent_pos_only_dual_arm_robot_view
+🔄 Loading model and processor...
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:00<00:00,  2.71it/s]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:00<00:00,  3.48it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  3.83it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  3.62it/s]
+Using cache found in /virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main
+/virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+/virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+/virtual_lab/rlwrld/david/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+trainable params: 110,828,288 || all params: 7,652,065,472 || trainable%: 1.4483
+📈 Total Trainable Params: 124,236,024
+🔄 Loading Latent Action Model...
+07/12 [06:44:38] INFO     | >> using MLP layer as FFN  vision_transformer.py:123
+📂 Loading training data...
+Calculating normalization stats from 55 episodes...
+  0%|          | 0/55 [00:00<?, ?it/s]  4%|▎         | 2/55 [00:00<00:03, 16.34it/s]  7%|▋         | 4/55 [00:00<00:04, 12.48it/s] 11%|█         | 6/55 [00:00<00:03, 14.61it/s] 16%|█▋        | 9/55 [00:00<00:02, 17.67it/s] 20%|██        | 11/55 [00:00<00:02, 15.95it/s] 24%|██▎       | 13/55 [00:00<00:02, 14.32it/s] 27%|██▋       | 15/55 [00:00<00:02, 14.85it/s] 31%|███       | 17/55 [00:01<00:02, 15.08it/s] 35%|███▍      | 19/55 [00:01<00:02, 16.05it/s] 40%|████      | 22/55 [00:01<00:01, 17.21it/s] 45%|████▌     | 25/55 [00:01<00:01, 18.58it/s] 51%|█████     | 28/55 [00:01<00:01, 19.42it/s] 55%|█████▍    | 30/55 [00:01<00:01, 18.94it/s] 58%|█████▊    | 32/55 [00:01<00:01, 17.42it/s] 64%|██████▎   | 35/55 [00:02<00:01, 19.55it/s] 67%|██████▋   | 37/55 [00:02<00:00, 19.32it/s] 71%|███████   | 39/55 [00:02<00:00, 18.90it/s] 76%|███████▋  | 42/55 [00:02<00:00, 19.28it/s] 80%|████████  | 44/55 [00:02<00:00, 18.14it/s] 84%|████████▎ | 46/55 [00:02<00:00, 18.06it/s] 89%|████████▉ | 49/55 [00:02<00:00, 19.75it/s] 93%|█████████▎| 51/55 [00:02<00:00, 19.59it/s] 98%|█████████▊| 54/55 [00:03<00:00, 20.79it/s] 98%|█████████▊| 54/55 [00:03<00:00, 17.93it/s]
+Traceback (most recent call last):
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 777, in main
+    finetune_ablation(
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 559, in finetune_ablation
+    dataloader, stats = load_data_manual(
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 223, in load_data_manual
+    norm_stats = get_norm_stats_from_files(dataset_dir, [], [])
+  File "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/finetune_rlwrld_ablation.py", line 62, in get_norm_stats_from_files
+    state_data = np.load(episode_path / "state.npy")
+  File "/virtual_lab/rlwrld/david/.local/lib/python3.10/site-packages/numpy/lib/npyio.py", line 427, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: 'univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view/episode_000183/state.npy'
+❌ Training failed: [Errno 2] No such file or directory: 'univla/converted_data/univla_30_percent_pos_only_dual_arm_robot_view/episode_000183/state.npy'
+
+==================================================
+SUMMARY
+==================================================
+Data preparation: ✅ SUCCESS
+Training: ✅ SUCCESS
+Overall: ✅ SUCCESS
+==================================================
