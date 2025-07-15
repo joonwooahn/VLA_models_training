@@ -9,19 +9,10 @@ from pathlib import Path
 # ==============================================================================
 # 사용자 설정 영역 (이전과 동일, 경로 확인)
 # ==============================================================================
-####### allex
-# base_input_dir = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset"
-# output_dir = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset_single_view_converted_state_action"
-# output_dir = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset_side_view_converted_state_action"
-# VIDEO_KEYS = ['observation.images.robot0_robotview', 'observation.images.sideview']
 
-####### gr1
-base_input_dir = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/gr1-cube-dataset"
-# output_dir = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/gr1-cube-dataset_single_view_converted_state_action"
-output_dir = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/gr1-cube-dataset_side_view_converted_state_action"
-# VIDEO_KEYS = ['observation.images.robot0_robotview', 'observation.images.robot0_eye_in_right_hand', 'observation.images.sideview']
+base_input_dir = "/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_rightarm_truncated"
+output_dir = "/converted_data_for_univla"
 
-# VIDEO_KEY = 'observation.images.robot0_robotview'
 VIDEO_KEY = 'observation.images.sideview'
 
 STATE_COLUMN_NAME = 'observation.state'
@@ -78,6 +69,7 @@ def process_episode(parquet_file, video_dir_template, output_root):
         f.write(instruction)
 
 def main():
+    final_output_dir = os.path.join(output_dir, os.path.basename(base_input_dir))
     video_dir_template = os.path.join(base_input_dir, 'videos/chunk-000')
     data_dir = os.path.join(base_input_dir, 'data/chunk-000')
 
@@ -94,10 +86,10 @@ def main():
 
     print(f"총 {len(parquet_files)}개의 에피소드를 변환합니다.")
     print(f"사용할 비디오: {VIDEO_KEY}")
-    print(f"변환된 데이터 저장 위치: '{output_dir}'")
+    print(f"변환된 데이터 저장 위치: '{final_output_dir}'")
 
     for parquet_file in tqdm(parquet_files):
-        process_episode(parquet_file, video_dir_template, output_dir)
+        process_episode(parquet_file, video_dir_template, final_output_dir)
 
     print("\n데이터 변환 완료!")
 
