@@ -10,8 +10,9 @@ from pathlib import Path
 # 사용자 설정 영역 (이전과 동일, 경로 확인)
 # ==============================================================================
 
-base_input_dir = "/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_rightarm_truncated"
-output_dir = "/converted_data_for_univla"
+# base_input_dir과 output_dir은 shell script에서 동적으로 설정됩니다
+base_input_dir = None
+output_dir = None
 
 VIDEO_KEY = 'observation.images.sideview'
 
@@ -69,7 +70,12 @@ def process_episode(parquet_file, video_dir_template, output_root):
         f.write(instruction)
 
 def main():
-    final_output_dir = os.path.join(output_dir, os.path.basename(base_input_dir))
+    # 입력 데이터의 마지막 폴더명을 그대로 사용하되, 명시적으로 설정
+    input_folder_name = os.path.basename(base_input_dir)
+    final_output_dir = os.path.join(output_dir, input_folder_name)
+    
+    print(f"입력 폴더명: {input_folder_name}")
+    print(f"출력 디렉토리: {final_output_dir}")
     video_dir_template = os.path.join(base_input_dir, 'videos/chunk-000')
     data_dir = os.path.join(base_input_dir, 'data/chunk-000')
 

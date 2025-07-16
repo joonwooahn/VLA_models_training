@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH --job-name=gr00t-bimanual-cube
+#SBATCH --output=tmp/slurm-%j-%x.log
+#SBATCH --partition=batch
+#SBATCH --gpus=1
+
+mkdir -p tmp 2>/dev/null
+mkdir -p checkpoints 2>/dev/null
+
+
+# Conda 초기화 및 환경 활성화
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate gr00t_1.5
+echo "✅ Conda environment 'gr00t_1.5' activated."
+
+python scripts/gr00t_finetune.py \
+   --dataset-path /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/250716/allex_gesture_easy_all \
+   --num-gpus 1 \
+   --output-dir checkpoints/allex-bimanual-gesture  \
+   --max-steps 8000 \
+   --data-config allex_bimanual \
+   --video-backend torchvision_av \
+   --action_dim 42 \
+   > tmp/slurm-$SLURM_JOB_ID-policy.log 2>&1
+
