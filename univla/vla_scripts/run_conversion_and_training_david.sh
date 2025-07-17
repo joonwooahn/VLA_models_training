@@ -1,16 +1,15 @@
 #!/bin/bash
 
-#SBATCH --job-name=${1:-univla-ablation-study}
 #SBATCH --output=_logs/univla/slurm-%j-%x.log
-#SBATCH --partition=batch
 #SBATCH --gpus=1
+#SBATCH --partition=rlwrld
 
 # srun --gpus=1 --nodes=1 --pty /bin/bash
 
-# 스크립트 디렉토리 설정
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 스크립트 디렉토리 설정 (절대 경로 사용)
+SCRIPT_DIR="/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts"
 
-# 스크립트 디렉토리로 이동 (SLURM 작업 디렉토리 문제 해결)
+# 스크립트 디렉토리로 이동
 cd "$SCRIPT_DIR"
 
 # 기본 설정
@@ -142,13 +141,19 @@ fi
 if [ "$converted_data_exists" = false ]; then
     print_step "1단계: LeRobot 데이터셋 변환"
     
-    # 변환 스크립트 경로 수정
+    # 변환 스크립트 경로
     CONVERT_SCRIPT="$SCRIPT_DIR/convert_lerobot_dataset_for_univla.py"
+    
+    # 변환 스크립트가 존재하는지 확인
+    if [ ! -f "$CONVERT_SCRIPT" ]; then
+        print_error "변환 스크립트를 찾을 수 없습니다: $CONVERT_SCRIPT"
+        exit 1
+    fi
     
     # 임시 백업 파일 생성
     cp "$CONVERT_SCRIPT" "${CONVERT_SCRIPT}.backup"
     
-    # 경로 수정
+    # 경로 수정 (원본 파일에서 직접 수정)
     sed -i "s|base_input_dir = None|base_input_dir = \"$INPUT_DATA\"|g" "$CONVERT_SCRIPT"
     sed -i "s|output_dir = None|output_dir = \"$OUTPUT_DATA\"|g" "$CONVERT_SCRIPT"
     

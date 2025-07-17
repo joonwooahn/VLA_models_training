@@ -11,10 +11,11 @@ from pathlib import Path
 # ==============================================================================
 
 # base_input_dir과 output_dir은 shell script에서 동적으로 설정됩니다
-base_input_dir = None
-output_dir = None
+base_input_dir = "/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/250716/allex_gesture_easy_all"
+output_dir = "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/converted_data_for_univla"
 
-VIDEO_KEY = 'observation.images.sideview'
+# VIDEO_KEY = 'observation.images.sideview'
+VIDEO_KEY = 'observation.images.robot0_robotview'
 
 STATE_COLUMN_NAME = 'observation.state'
 ACTION_COLUMN_NAME = 'action'
