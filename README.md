@@ -1,5 +1,7 @@
 # VLA_models_training
 
+conda는 가능하면 gpu 있는 환경에서 설치
+
 ## 추론을 위한 omni-pilot 환경 설정
 ### uv 설치
 ```sh
