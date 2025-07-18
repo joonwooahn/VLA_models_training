@@ -40,8 +40,8 @@ GIT_LFS_SKIP_SMUDGE=1 make sync
 * slurm에서 수행
 ```sh
 cd gr00t
-conda create -n gr00t_1.5 python=3.10
-conda activate gr00t_1.5
+conda create -n gr00t_vla python=3.10
+conda activate gr00t_vla
 pip install --upgrade setuptools
 pip install -e .[base]
 pip install --no-build-isolation flash-attn==2.7.1.post4
@@ -80,8 +80,8 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    
    # Conda 초기화 및 환경 활성화
    source ~/miniconda3/etc/profile.d/conda.sh
-   conda activate gr00t_1.5
-   echo "✅ Conda environment 'gr00t_1.5' activated."
+   conda activate gr00t_vla
+   echo "✅ Conda environment 'gr00t_vla' activated."
    
    mkdir -p tmp 2>/dev/null
    mkdir -p checkpoints 2>/dev/null
@@ -125,7 +125,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    
    #### 1-4-2. Isaac-GR00T에서 Inference 서버 실행 (터미널 1)
    ```sh
-   conda activate gr00t_1.5
+   conda activate gr00t_vla
    python scripts/inference_service.py --server --model_path artifact/checkpoints/allex-bimanual-cube2 --embodiment_tag new_embodiment --data_config allex_cube --port 7777
    ```
    
@@ -145,7 +145,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    ```sh
    cd pi0
    conda create -y -n lerobot python=3.10
-   conda activate lerobot
+   conda activate lerobot_vla
    conda install ffmpeg -c conda-forge
    pip install -e . 
    pip install tensorboard absl-py jax dm-tree
@@ -176,7 +176,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
 ### pi0-1-2. 훈련
    #### 1-2-1. dataset 경로
    ```sh
-   conda activate lerobot
+   conda activate lerobot_vla
    python3
    > from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
    LeRobotDataset('RLWRLD/put_cube')
@@ -200,8 +200,8 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    
    # Conda 초기화 및 환경 활성화
    source ~/miniconda3/etc/profile.d/conda.sh
-   conda activate lerobot
-   echo "✅ Conda environment 'lerobot' activated."
+   conda activate lerobot_vla
+   echo "✅ Conda environment 'lerobot_vla' activated."
    
    python3 lerobot/scripts/train.py \
        --job_name $SLURM_JOB_NAME \
@@ -245,8 +245,8 @@ bin/python packages/pi0/pi0_control.py --data-config allex_cube --env-name LiftO
    #### 1-1-1. univla conda 환경 설정
    ```sh
    cd univla
-   conda create -n univla_train python=3.10 -y
-   conda activate univla_train
+   conda create -n univla_vla python=3.10 -y
+   conda activate univla_vla
    conda install pytorch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 pytorch-cuda=12.1 -c pytorch -c nvidia -y
    pip install -e .
    pip install packaging ninja
@@ -262,7 +262,7 @@ bin/python packages/pi0/pi0_control.py --data-config allex_cube --env-name LiftO
    
    #### 1-1-2. 기 훈련된 latent action model & vision large model 받기
    ```sh
-   conda activate univla_train
+   conda activate univla_vla
    cd vla_scripts
    git lfs install
    git clone https://huggingface.co/qwbu/univla-7b
@@ -295,8 +295,8 @@ bin/python packages/pi0/pi0_control.py --data-config allex_cube --env-name LiftO
    # srun --gpus=1 --nodes=1 --pty /bin/bash
    
    source ~/miniconda3/etc/profile.d/conda.sh
-   conda activate univla_train
-   echo "✅ Conda environment 'univla_train' activated."
+   conda activate univla_vla
+   echo "✅ Conda environment 'univla_vla' activated."
    
    torchrun --standalone --nnodes 1 --nproc-per-node 1 vla_scripts/finetune_rlwrld.py \
        --data_root_dir "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset_single_view_converted_state_action" \
