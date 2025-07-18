@@ -1,6 +1,6 @@
 # VLA_models_training
 
-conda는 가능하면 gpu 있는 환경에서 설치
+conda는 가능하면 GPU 있는 환경에서 설치
 
 ## 추론을 위한 omni-pilot 환경 설정
 ### uv 설치
@@ -153,7 +153,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    pip install tensorboard absl-py jax dm-tree
    pip install -e ".[pi0,pi0fast,test]"
    ```
-   > libcusparseLt.so.0 관련 에러 나면 pip uninstall torch torchvision torchaudio -y && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+   > libcusparseLt.so.0 관련 에러 나면 GPU가 없는 환경에서 conda lerobot_vla 를 설치했기 때문임, 지우고 다시 GPU 잡아 설치
    #### 1-1-1. huggingface에 있는 weight 사용 권한 받기
    https://huggingface.co/google/paligemma-3b-pt-224 들어가서 Authorize 관련 버튼 누르고 권한 신청
    > 아래 에러 대처: "OSError: You are trying to access a gated repo.
