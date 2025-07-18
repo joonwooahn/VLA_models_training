@@ -151,6 +151,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    pip install tensorboard absl-py jax dm-tree
    pip install -e ".[pi0,pi0fast,test]"
    ```
+   > libcusparseLt.so.0 관련 에러 나면 pip uninstall torch torchvision torchaudio -y && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
    #### 1-1-1. huggingface에 있는 weight 사용 권한 받기
    https://huggingface.co/google/paligemma-3b-pt-224 들어가서 Authorize 관련 버튼 누르고 권한 신청
    > 아래 에러 대처: "OSError: You are trying to access a gated repo.
