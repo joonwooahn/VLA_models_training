@@ -149,7 +149,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    conda install ffmpeg -c conda-forge
    pip install -e . 
    pip install tensorboard absl-py jax dm-tree
-   pip install -e ".[pi0,test]"
+   pip install -e ".[pi0,pi0fast,test]"
    ```
    #### 1-1-1. huggingface에 있는 weight 사용 권한 받기
    https://huggingface.co/google/paligemma-3b-pt-224 들어가서 Authorize 관련 버튼 누르고 권한 신청
