@@ -144,7 +144,7 @@ tensorstore 0.1.75 requires ml_dtypes>=0.5.0, but you have ml-dtypes 0.2.0 which
    #### 1-1-1. pi0 conda 환경 설정
    ```sh
    cd pi0
-   conda create -y -n lerobot python=3.10
+   conda create -y -n lerobot_vla python=3.10
    conda activate lerobot_vla
    conda install ffmpeg -c conda-forge
    pip install -e . 
