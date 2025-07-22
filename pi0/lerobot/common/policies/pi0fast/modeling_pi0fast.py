@@ -536,9 +536,16 @@ class PI0FAST(nn.Module):
         return images, img_masks
 
     def normalize_actions(self, actions: torch.Tensor) -> torch.Tensor:
-        mins = actions.amin(dim=(1, 2), keepdim=True)  # [0]
-        maxs = actions.amax(dim=(1, 2), keepdim=True)  # [0]
-        return 2 * (actions - mins) / (maxs - mins + 1e-8) - 1
+        ######################## original code
+        # mins = actions.amin(dim=(1, 2), keepdim=True)  # [0]
+        # maxs = actions.amax(dim=(1, 2), keepdim=True)  # [0]
+        # return 2 * (actions - mins) / (maxs - mins + 1e-8) - 1
+
+        ######################## new code
+        # Use dataset statistics-based normalization instead of batch-wise min-max
+        # This ensures consistent normalization between training and inference
+        normalized_batch = self.normalize_targets({"action": actions})
+        return normalized_batch["action"]
 
     def _act_tokens_to_paligemma_tokens(self, tokens: torch.Tensor) -> torch.Tensor:
         out = self.paligemma_tokenizer.vocab_size - 1 - self.fast_skip_tokens - tokens
@@ -566,8 +573,15 @@ class PI0FAST(nn.Module):
     def create_input_tokens(self, state, lang_text, actions=None):
         bsize = state.shape[0]
         device = state.device
+        
+        # Normalize state using dataset statistics instead of assuming [-1, 1] range
+        # This ensures consistent normalization between training and inference
+        normalized_state_batch = self.normalize_inputs({OBS_STATE: state})
+        normalized_state = normalized_state_batch[OBS_STATE]
+        
         bins = torch.linspace(-1, 1, 256 + 1, device=device)[:-1]
-        discretized = torch.bucketize(state, bins) - 1
+        # discretized = torch.bucketize(state, bins) - 1    ### original code
+        discretized = torch.bucketize(normalized_state, bins) - 1    ### new code
         discretized = discretized[:, :32]
 
         prefix_texts = []

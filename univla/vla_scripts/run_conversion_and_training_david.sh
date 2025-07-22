@@ -1,10 +1,11 @@
 #!/bin/bash
 
-#SBATCH --output=_logs/univla/slurm-%j-%x.log
-#SBATCH --gpus=1
+#SBATCH --output=/virtual_lab/rlwrld/david/VLA_models_training/_logs/univla/slurm-%j-%x.log
+#SBATCH --gpus=4
 #SBATCH --partition=rlwrld
+#SBATCH --nodes=1
 
-# srun --gpus=1 --nodes=1 --pty /bin/bash
+# srun --comment="univla training" --gpus=1 --nodes=1 --pty /bin/bash
 
 # 스크립트 디렉토리 설정 (절대 경로 사용)
 SCRIPT_DIR="/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts"
@@ -14,7 +15,7 @@ cd "$SCRIPT_DIR"
 
 # 기본 설정
 OUTPUT_DATA="$SCRIPT_DIR/converted_data_for_univla"
-CONDA_ENV="univla_train"
+CONDA_ENV="univla_vla"
 
 # 명령행 인자 처리
 if [ $# -eq 0 ]; then
@@ -31,6 +32,7 @@ if [ $# -eq 0 ]; then
     echo "  STATE_INDICES: \"0,1,2,3,4,5,6,7,8,9,10,11,12,20,21,22,23,24,25,26,27,28,29,30\""
     echo "  ACTION_INDICES: \"0,1,2,3,4,5,12,13,14,15,16,17\""
     echo "  CHECKPOINT_DIR_NAME: ablation study script에서 자동 생성"
+    echo "  NUM_GPUS: SLURM 환경에서 자동 감지 (기본값: 4)"
     exit 1
 fi
 
@@ -43,6 +45,9 @@ ACTION_INDICES="${6:-"0,1,2,3,4,5,12,13,14,15,16,17"}"
 
 # Checkpoint directory name (passed from ablation study script)
 CHECKPOINT_DIR_NAME="${7:-}"
+
+# Number of GPUs (from SLURM environment or default)
+NUM_GPUS="${SLURM_GPUS_ON_NODE:-4}"
 
 # INPUT_DATA_PATH의 마지막 폴더명을 기본 CHECKOUT_NAME으로 사용
 # 하지만 CHECKPOINT_DIR_NAME이 제공되면 그것을 사용
@@ -86,6 +91,7 @@ if [ -n "$CHECKPOINT_DIR_NAME" ]; then
 fi
 print_info "State 인덱스: $STATE_INDICES"
 print_info "Action 인덱스: $ACTION_INDICES"
+print_info "GPU 개수: $NUM_GPUS"
 
 # conda 환경 활성화
 print_step "환경 설정"
@@ -150,30 +156,18 @@ if [ "$converted_data_exists" = false ]; then
         exit 1
     fi
     
-    # 임시 백업 파일 생성
-    cp "$CONVERT_SCRIPT" "${CONVERT_SCRIPT}.backup"
-    
-    # 경로 수정 (원본 파일에서 직접 수정)
-    sed -i "s|base_input_dir = None|base_input_dir = \"$INPUT_DATA\"|g" "$CONVERT_SCRIPT"
-    sed -i "s|output_dir = None|output_dir = \"$OUTPUT_DATA\"|g" "$CONVERT_SCRIPT"
-    
     print_info "변환 스크립트 경로 수정 완료"
     print_info "  입력: $INPUT_DATA"
     print_info "  출력: $OUTPUT_DATA"
     
-    # 변환 스크립트 실행
+    # 변환 스크립트 실행 (명령줄 인수로 경로 전달)
     print_info "데이터 변환 시작..."
-    if python "$CONVERT_SCRIPT"; then
+    if python "$CONVERT_SCRIPT" "$INPUT_DATA" "$OUTPUT_DATA"; then
         print_success "데이터 변환 완료"
     else
         print_error "데이터 변환 실패"
-        # 백업 파일 복원
-        mv "${CONVERT_SCRIPT}.backup" "$CONVERT_SCRIPT"
         exit 1
     fi
-    
-    # 백업 파일 복원
-    mv "${CONVERT_SCRIPT}.backup" "$CONVERT_SCRIPT"
 else
     print_step "1단계: 데이터 변환 (건너뛰기)"
 fi
@@ -235,7 +229,7 @@ print_info "  Action 인덱스: $ACTION_INDICES"
 
 # 훈련 스크립트 실행 (명령행 인자로 전달)
 print_info "모델 훈련 시작..."
-if torchrun --standalone --nnodes 1 --nproc-per-node 1 "$FINETUNE_SCRIPT" \
+if torchrun --standalone --nnodes 1 --nproc-per-node "$NUM_GPUS" "$FINETUNE_SCRIPT" \
     --data_root_dir "$OUTPUT_DATA" \
     --indices_for_state "$STATE_INDICES" \
     --indices_for_action "$ACTION_INDICES" \

@@ -82,6 +82,73 @@ def get_norm_stats_from_files(dataset_dir):
     }
     return stats
 
+# class ManualDataset(torch.utils.data.Dataset):
+#     def __init__(self, root_dir, norm_stats, window_size, image_transform=None):
+#         self.root_dir = Path(root_dir)
+#         self.norm_stats = norm_stats
+#         self.window_size = window_size
+#         self.image_transform = image_transform
+#         self.episodes = []
+#         print(f"Loading episode info from {root_dir}...")
+#         for episode_path in tqdm.tqdm(sorted([p for p in self.root_dir.iterdir() if p.is_dir()])):
+#             episode_len = len(np.load(episode_path / "action.npy"))
+#             if episode_len > window_size:
+#                 self.episodes.append({'path': episode_path, 'len': episode_len})
+#         self.image_transform_lam = transforms.ToTensor()
+#         self.resize_img = transforms.Resize((224, 224))
+#     def __len__(self):
+#         return len(self.episodes)
+
+#     def __getitem__(self, idx):
+#         episode_info = self.episodes[idx]
+#         episode_path = episode_info['path']
+#         episode_len = episode_info['len']
+
+#         extra_frame_num = random.randint(0, 1)
+#         image_index = np.random.choice(episode_len - self.window_size - extra_frame_num) + 1 # filename starts from 001
+
+#         # start_idx = random.randint(0, episode_len - self.window_size - 1)
+#         # end_idx = start_idx + self.window_size
+#         start_idx = image_index + extra_frame_num
+#         end_idx = image_index + self.window_size + extra_frame_num
+        
+#         full_state = np.load(episode_path / "state.npy")[start_idx]
+#         state_filtered = full_state[INDICES_FOR_STATE]
+#         state_mean = np.array(self.norm_stats["state_mean"])[INDICES_FOR_STATE]
+#         state_std = np.array(self.norm_stats["state_std"])[INDICES_FOR_STATE]
+#         state_normalized = (state_filtered - state_mean) / state_std
+#         states_tensor = torch.from_numpy(state_normalized).float()
+
+#         full_actions = np.load(episode_path / "action.npy")[start_idx:end_idx]
+#         actions_filtered = full_actions[:, INDICES_FOR_ACTION]
+#         action_mean = np.array(self.norm_stats["action_mean"])[INDICES_FOR_ACTION]
+#         action_std = np.array(self.norm_stats["action_std"])[INDICES_FOR_ACTION]
+#         actions_normalized = (actions_filtered - action_mean) / action_std
+#         actions_tensor = torch.from_numpy(actions_normalized).float()
+
+#         with open(episode_path / "instruction.txt", "r") as f:
+#             instruction = f.read().strip()
+
+#         main_image_path = episode_path / f"frame_{start_idx:03d}.png"
+#         pixel_values = self.image_transform(Image.open(main_image_path).convert("RGB"))
+
+#         initial_pixel_values = self.image_transform_lam(self.resize_img(Image.open(main_image_path).convert("RGB")))
+#         target_frame_path = episode_path / f"frame_{end_idx-1:03d}.png"
+#         target_pixel_values = self.image_transform_lam(self.resize_img(Image.open(target_frame_path).convert("RGB")))
+
+#         initial_pixel_values_hist, target_pixel_values_hist = None, None
+#         if extra_frame_num > 0:
+#             hist_frame_prev = Image.open(episode_path / f"frame_{start_idx-extra_frame_num:03d}.png").convert("RGB")
+#             hist_frame_goal = Image.open(episode_path / f"frame_{end_idx-1-extra_frame_num:03d}.png").convert("RGB")
+#             initial_pixel_values_hist = self.image_transform_lam(self.resize_img(hist_frame_prev))
+#             target_pixel_values_hist = self.image_transform_lam(self.resize_img(hist_frame_goal))
+
+#         return dict(
+#             pixel_values=pixel_values, actions=actions_tensor, lang=instruction, proprio=states_tensor,
+#             initial_pixel_values=initial_pixel_values, target_pixel_values=target_pixel_values,
+#             initial_pixel_values_hist=initial_pixel_values_hist, target_pixel_values_hist=target_pixel_values_hist,
+#         )
+
 class ManualDataset(torch.utils.data.Dataset):
     def __init__(self, root_dir, norm_stats, window_size, image_transform=None, indices_for_state=None, indices_for_action=None):
         self.root_dir = Path(root_dir)
@@ -115,7 +182,7 @@ class ManualDataset(torch.utils.data.Dataset):
         state_mean = np.array(self.norm_stats["state_mean"])[self.indices_for_state]
         state_std = np.array(self.norm_stats["state_std"])[self.indices_for_state]
         # 안전한 정규화: 표준편차가 0인 경우 처리
-        state_std = np.where(state_std == 0, 1.0, state_std)
+        # state_std = np.where(state_std == 0, 1.0, state_std)
         state_normalized = (state_filtered - state_mean) / state_std
         states_tensor = torch.from_numpy(state_normalized).float()
 
@@ -124,7 +191,7 @@ class ManualDataset(torch.utils.data.Dataset):
         action_mean = np.array(self.norm_stats["action_mean"])[self.indices_for_action]
         action_std = np.array(self.norm_stats["action_std"])[self.indices_for_action]
         # 안전한 정규화: 표준편차가 0인 경우 처리
-        action_std = np.where(action_std == 0, 1.0, action_std)
+        # action_std = np.where(action_std == 0, 1.0, action_std)
         actions_normalized = (actions_filtered - action_mean) / action_std
         actions_tensor = torch.from_numpy(actions_normalized).float()
 
@@ -265,12 +332,12 @@ class FinetuneConfig:
 
     # Fine-tuning Parameters
     batch_size: int = 8                                             # Fine-tuning batch size
-    max_steps: int = 35001                                          # Max number of fine-tuning steps
+    max_steps: int = 30001                                          # Max number of fine-tuning steps
     save_steps: int = 5000                                          # Interval for checkpoint saving
     learning_rate: float = 3.5e-4                                   # Fine-tuning learning rate
-    grad_accumulation_steps: int = 2                                # Gradient accumulation steps
-    image_aug: bool = False                                         # Whether to train with image augmentations
-    shuffle_buffer_size: int = 100_00                               # Dataloader shuffle buffer size (can reduce if OOM)
+    grad_accumulation_steps: int = 1                                # Gradient accumulation steps
+    image_aug: bool = True                                         # Whether to train with image augmentations
+    shuffle_buffer_size: int = 16000                               # Dataloader shuffle buffer size (can reduce if OOM)
     save_latest_checkpoint_only: bool = True                        # Whether to save only one checkpoint per run and
                                                                     #   (If False, saves all checkpoints)
     # LAM setting

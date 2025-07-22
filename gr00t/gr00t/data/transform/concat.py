@@ -88,7 +88,8 @@ class ConcatTransform(InvertibleModalityTransform):
                 grouped_keys[modality] = []
             grouped_keys[modality].append(key)
 
-        if "video" in grouped_keys:
+        # Handle video only if video_concat_order is not empty
+        if "video" in grouped_keys and self.video_concat_order:
             # Check if keys in video_concat_order, state_concat_order, action_concat_order are
             # ineed contained in the data. If not, then the keys are misspecified
             video_keys = grouped_keys["video"]
@@ -110,6 +111,11 @@ class ConcatTransform(InvertibleModalityTransform):
 
             # Video
             data["video"] = unsqueezed_video
+        elif not self.video_concat_order:
+            # If video_concat_order is empty, create a dummy video tensor
+            # This is needed for GR00TTransform which expects a video key
+            # Use a more reasonable size to avoid channel dimension ambiguity warnings
+            data["video"] = np.zeros((1, 1, 224, 224, 3))  # [T, V, H, W, C]
 
         # "state"
         if "state" in grouped_keys:

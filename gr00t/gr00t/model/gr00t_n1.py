@@ -186,6 +186,9 @@ class GR00T_N1_5(PreTrainedModel):
         action_inputs = self.action_head.prepare_input(inputs)
 
         def to_device_with_maybe_dtype(x):
+            # Skip non-tensor objects (like PIL Images)
+            if not torch.is_tensor(x):
+                return x
             # Only cast to self.compute_dtype if the tensor is floating
             if torch.is_floating_point(x):
                 return x.to(self.device, dtype=self.action_head.dtype)
