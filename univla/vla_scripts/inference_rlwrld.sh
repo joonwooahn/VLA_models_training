@@ -8,6 +8,6 @@
 # srun --gpus=1 --nodes=1 --pty /bin/bash
 
 source ~/miniconda3/etc/profile.d/conda.sh
-conda activate univla_train
+conda activate univla_vla
 
 torchrun inference_rlwrld.py

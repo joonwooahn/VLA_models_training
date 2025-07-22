@@ -44,7 +44,7 @@ class PI0Config(PreTrainedConfig):
 
     # Extended state and action vectors that are used by allex robot
     use_extended_dim: bool = True
-    ext_state_dim: int = 60
+    ext_state_dim: int = 62
     ext_action_dim: int = 42
 
     # Image preprocessing

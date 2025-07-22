@@ -47,41 +47,6 @@ from prismatic.vla.datasets.real_world_dataset import PaddedCollatorForActionPre
 import random
 import json
 
-################################################################################
-### allex
-# DATA_DIR = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset_multiview_converted_state_action"
-# CHECKOUT_NAME = "allex_state_action_filter"
-
-# DATA_DIR = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset_single_view_converted_state_action"
-# CHECKOUT_NAME = "allex_state_action_filter_single_view"
-
-# DATA_DIR = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/allex-cube-dataset_side_view_converted_state_action"
-# CHECKOUT_NAME = "allex_state_action_filter_side_view"
-
-### 데이터에서 오른팔 및 손 움직임만 훈련하기 위해 인덱스 설정
-# INDICES_FOR_STATE = list(range(4)) + list(range(6, 13)) + list(range(20, 40)) 
-# INDICES_FOR_ACTION = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
-################################################################################
-
-################################################################################
-### gr1
-## DATA_DIR = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/gr1-cube-dataset_multiview_converted_state_action"
-# CHECKOUT_NAME = "gr1_state_action_filter"
-
-# DATA_DIR = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/gr1-cube-dataset_single_view_converted_state_action"
-# CHECKOUT_NAME = "gr1_state_action_filter_single_view"
-
-DATA_DIR = "/virtual_lab/rlwrld/david/pi_0_fast/openpi/data/rlwrld_dataset/gr1-cube-dataset_side_view_converted_state_action"
-CHECKOUT_NAME = "gr1_state_action_filter_side_view"
-
-# ### 데이터에서 오른팔 및 손 움직임만 훈련하기 위해 인덱스 설정
-INDICES_FOR_STATE = list(range(13)) + list(range(20, 31))
-INDICES_FOR_ACTION = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17]
-################################################################################
-
-STATE_DIM = len(INDICES_FOR_STATE)
-ACTION_DIM = len(INDICES_FOR_ACTION)
-
 # ==============================================================================
 # 커스텀 데이터 처리 함수 및 클래스
 # ==============================================================================
@@ -105,6 +70,10 @@ def get_norm_stats_from_files(dataset_dir):
     action_mean = all_actions_tensor.mean(dim=0, keepdim=True)
     action_std = all_actions_tensor.std(dim=0, keepdim=True)
     
+    # 표준편차가 0인 경우를 처리 (안전한 정규화)
+    state_std = torch.where(state_std == 0, torch.ones_like(state_std), state_std)
+    action_std = torch.where(action_std == 0, torch.ones_like(action_std), action_std)
+    
     stats = {
         "state_mean": state_mean.numpy().squeeze().tolist(),
         "state_std": state_std.numpy().squeeze().tolist(),
@@ -113,12 +82,81 @@ def get_norm_stats_from_files(dataset_dir):
     }
     return stats
 
+# class ManualDataset(torch.utils.data.Dataset):
+#     def __init__(self, root_dir, norm_stats, window_size, image_transform=None):
+#         self.root_dir = Path(root_dir)
+#         self.norm_stats = norm_stats
+#         self.window_size = window_size
+#         self.image_transform = image_transform
+#         self.episodes = []
+#         print(f"Loading episode info from {root_dir}...")
+#         for episode_path in tqdm.tqdm(sorted([p for p in self.root_dir.iterdir() if p.is_dir()])):
+#             episode_len = len(np.load(episode_path / "action.npy"))
+#             if episode_len > window_size:
+#                 self.episodes.append({'path': episode_path, 'len': episode_len})
+#         self.image_transform_lam = transforms.ToTensor()
+#         self.resize_img = transforms.Resize((224, 224))
+#     def __len__(self):
+#         return len(self.episodes)
+
+#     def __getitem__(self, idx):
+#         episode_info = self.episodes[idx]
+#         episode_path = episode_info['path']
+#         episode_len = episode_info['len']
+
+#         extra_frame_num = random.randint(0, 1)
+#         image_index = np.random.choice(episode_len - self.window_size - extra_frame_num) + 1 # filename starts from 001
+
+#         # start_idx = random.randint(0, episode_len - self.window_size - 1)
+#         # end_idx = start_idx + self.window_size
+#         start_idx = image_index + extra_frame_num
+#         end_idx = image_index + self.window_size + extra_frame_num
+        
+#         full_state = np.load(episode_path / "state.npy")[start_idx]
+#         state_filtered = full_state[INDICES_FOR_STATE]
+#         state_mean = np.array(self.norm_stats["state_mean"])[INDICES_FOR_STATE]
+#         state_std = np.array(self.norm_stats["state_std"])[INDICES_FOR_STATE]
+#         state_normalized = (state_filtered - state_mean) / state_std
+#         states_tensor = torch.from_numpy(state_normalized).float()
+
+#         full_actions = np.load(episode_path / "action.npy")[start_idx:end_idx]
+#         actions_filtered = full_actions[:, INDICES_FOR_ACTION]
+#         action_mean = np.array(self.norm_stats["action_mean"])[INDICES_FOR_ACTION]
+#         action_std = np.array(self.norm_stats["action_std"])[INDICES_FOR_ACTION]
+#         actions_normalized = (actions_filtered - action_mean) / action_std
+#         actions_tensor = torch.from_numpy(actions_normalized).float()
+
+#         with open(episode_path / "instruction.txt", "r") as f:
+#             instruction = f.read().strip()
+
+#         main_image_path = episode_path / f"frame_{start_idx:03d}.png"
+#         pixel_values = self.image_transform(Image.open(main_image_path).convert("RGB"))
+
+#         initial_pixel_values = self.image_transform_lam(self.resize_img(Image.open(main_image_path).convert("RGB")))
+#         target_frame_path = episode_path / f"frame_{end_idx-1:03d}.png"
+#         target_pixel_values = self.image_transform_lam(self.resize_img(Image.open(target_frame_path).convert("RGB")))
+
+#         initial_pixel_values_hist, target_pixel_values_hist = None, None
+#         if extra_frame_num > 0:
+#             hist_frame_prev = Image.open(episode_path / f"frame_{start_idx-extra_frame_num:03d}.png").convert("RGB")
+#             hist_frame_goal = Image.open(episode_path / f"frame_{end_idx-1-extra_frame_num:03d}.png").convert("RGB")
+#             initial_pixel_values_hist = self.image_transform_lam(self.resize_img(hist_frame_prev))
+#             target_pixel_values_hist = self.image_transform_lam(self.resize_img(hist_frame_goal))
+
+#         return dict(
+#             pixel_values=pixel_values, actions=actions_tensor, lang=instruction, proprio=states_tensor,
+#             initial_pixel_values=initial_pixel_values, target_pixel_values=target_pixel_values,
+#             initial_pixel_values_hist=initial_pixel_values_hist, target_pixel_values_hist=target_pixel_values_hist,
+#         )
+
 class ManualDataset(torch.utils.data.Dataset):
-    def __init__(self, root_dir, norm_stats, window_size, image_transform=None):
+    def __init__(self, root_dir, norm_stats, window_size, image_transform=None, indices_for_state=None, indices_for_action=None):
         self.root_dir = Path(root_dir)
         self.norm_stats = norm_stats
         self.window_size = window_size
         self.image_transform = image_transform
+        self.indices_for_state = indices_for_state
+        self.indices_for_action = indices_for_action
         self.episodes = []
         print(f"Loading episode info from {root_dir}...")
         for episode_path in tqdm.tqdm(sorted([p for p in self.root_dir.iterdir() if p.is_dir()])):
@@ -137,17 +175,23 @@ class ManualDataset(torch.utils.data.Dataset):
         start_idx = random.randint(0, episode_len - self.window_size - 1)
         end_idx = start_idx + self.window_size
         
+        # print("----------------------", episode_path, start_idx)
         full_state = np.load(episode_path / "state.npy")[start_idx]
-        state_filtered = full_state[INDICES_FOR_STATE]
-        state_mean = np.array(self.norm_stats["state_mean"])[INDICES_FOR_STATE]
-        state_std = np.array(self.norm_stats["state_std"])[INDICES_FOR_STATE]
+        # print("----------------------", len(full_state), full_state)
+        state_filtered = full_state[self.indices_for_state]
+        state_mean = np.array(self.norm_stats["state_mean"])[self.indices_for_state]
+        state_std = np.array(self.norm_stats["state_std"])[self.indices_for_state]
+        # 안전한 정규화: 표준편차가 0인 경우 처리
+        # state_std = np.where(state_std == 0, 1.0, state_std)
         state_normalized = (state_filtered - state_mean) / state_std
         states_tensor = torch.from_numpy(state_normalized).float()
 
         full_actions = np.load(episode_path / "action.npy")[start_idx:end_idx]
-        actions_filtered = full_actions[:, INDICES_FOR_ACTION]
-        action_mean = np.array(self.norm_stats["action_mean"])[INDICES_FOR_ACTION]
-        action_std = np.array(self.norm_stats["action_std"])[INDICES_FOR_ACTION]
+        actions_filtered = full_actions[:, self.indices_for_action]
+        action_mean = np.array(self.norm_stats["action_mean"])[self.indices_for_action]
+        action_std = np.array(self.norm_stats["action_std"])[self.indices_for_action]
+        # 안전한 정규화: 표준편차가 0인 경우 처리
+        # action_std = np.where(action_std == 0, 1.0, action_std)
         actions_normalized = (actions_filtered - action_mean) / action_std
         actions_tensor = torch.from_numpy(actions_normalized).float()
 
@@ -170,11 +214,12 @@ class ManualDataset(torch.utils.data.Dataset):
             with_hist=torch.tensor(False),
         )
 
-def load_data_manual(dataset_dir, batch_size, processor, window_size):
+def load_data_manual(dataset_dir, batch_size, processor, window_size, indices_for_state=None, indices_for_action=None):
     norm_stats = get_norm_stats_from_files(dataset_dir)
     dataset = ManualDataset(
         root_dir=dataset_dir, norm_stats=norm_stats, window_size=window_size,
         image_transform=processor.image_processor.apply_transform,
+        indices_for_state=indices_for_state, indices_for_action=indices_for_action,
     )
     collator = PaddedCollatorForActionPrediction(
         processor.tokenizer.model_max_length, processor.tokenizer.pad_token_id, padding_side="right"
@@ -186,17 +231,17 @@ def load_data_manual(dataset_dir, batch_size, processor, window_size):
     return dataloader, norm_stats
 
 class ActionDecoderHead(torch.nn.Module):
-    def __init__(self, window_size, hidden_dim=512):
+    def __init__(self, window_size, state_dim, action_dim, hidden_dim=512):
         super().__init__()
         self.attn_pool = MAPBlock(n_latents=1, vis_dim=4096, embed_dim=hidden_dim, n_heads=hidden_dim // 64)
         self.visual_pool = MAPBlock(n_latents=1, vis_dim=4096, embed_dim=hidden_dim, n_heads=hidden_dim // 64)
         self.proprio_proj = nn.Sequential(
-            nn.Linear(STATE_DIM, hidden_dim),
+            nn.Linear(state_dim, hidden_dim),
             nn.GELU(),
             nn.Linear(hidden_dim, hidden_dim)
         )
         self.proj = nn.Sequential(
-            nn.Linear(hidden_dim * 2, window_size * ACTION_DIM)
+            nn.Linear(hidden_dim * 2, window_size * action_dim)
         )
 
     def forward(self, latent_action_tokens, visual_embed, proprio):
@@ -209,12 +254,14 @@ class ActionDecoderHead(torch.nn.Module):
 
 
 class Wrapped_Model(torch.nn.Module):
-    def __init__(self, vla, freeze_vla=False, window_size=12):
+    def __init__(self, vla, freeze_vla=False, window_size=12, state_dim=None, action_dim=None):
         super().__init__()
         self.vla = vla
         self.window_size = window_size
+        self.state_dim = state_dim
+        self.action_dim = action_dim
         # 수정: ActionDecoderHead를 사용하도록 변경
-        self.action_decoder = ActionDecoderHead(window_size=window_size)
+        self.action_decoder = ActionDecoderHead(window_size=window_size, state_dim=state_dim, action_dim=action_dim)
         if freeze_vla:
             self.vla.requires_grad_(False)
 
@@ -251,7 +298,7 @@ class Wrapped_Model(torch.nn.Module):
             latent_action_tokens, 
             visual_embed, 
             batch['proprio'] # <--- proprio 전달 다시 추가
-        ).reshape(-1, self.window_size, ACTION_DIM) # <--- 차원을 ACTION_DIM (21)으로
+        ).reshape(-1, self.window_size, self.action_dim) # <--- 차원을 action_dim으로
 
         loss = torch.nn.functional.l1_loss(pred_action, batch['actions'], reduction='none')
         loss_one_step = loss[:,0].mean()
@@ -262,29 +309,36 @@ class Wrapped_Model(torch.nn.Module):
 
 @dataclass
 class FinetuneConfig:
-    # Directory Paths
-    # data_root_dir: Path = Path("/path/to/your/local/hdf5_data")     # Path to Open-X dataset directory
-    data_root_dir: Path = DATA_DIR     # Path to Open-X dataset directory
-
-    # vla_path: str = "/path/to/your/pretrained-univla-7b"            # Path to your local UniVLA path
-    vla_path: str = "./univla-7b"            # Path to your local UniVLA path
+    # vla_path: str = "./univla-7b"            # Path to your local UniVLA path
+    vla_path: str = "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/univla-7b"
     
-    # lam_path: str = "latent_action_model/logs/task_centric_lam_stage2/epoch=0-step=200000.ckpt"
-    lam_path: str = "./univla-latent-action-model/lam-stage-2.ckpt"
+    # lam_path: str = "./univla-latent-action-model/lam-stage-2.ckpt"
+    lam_path: str = "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/univla-latent-action-model/lam-stage-2.ckpt"
+
+    # Directory Paths
+    data_root_dir: Path = Path("")  # Will be set by command line argument
+    
+    # Data indices and dimensions
+    indices_for_state: str = ""  # Will be set by command line argument
+    indices_for_action: str = ""  # Will be set by command line argument
+    
+    # Experiment name
+    checkout_name: str = ""  # Experiment name for logging (set by shell script)
+    
     dataset_name: str = "real_world"                                    # Name of fine-tuning dataset (e.g., `droid_wipe`)
-    run_root_dir: Path = Path("runs")                               # Path to directory to store logs & checkpoints
+    # run_root_dir: Path = Path("runs")                               # Path to directory to store logs & checkpoints
+    run_root_dir: Path = Path("/virtual_lab/rlwrld/david/VLA_models_training/_checkpoints/unvla")   # Path to directory to store logs & checkpoints
     adapter_tmp_dir: Path = Path("adapter-tmp")                     # Temporary directory for LoRA weights before fusing
 
     # Fine-tuning Parameters
-    batch_size: int = 16                                             # Fine-tuning batch size
+    batch_size: int = 8                                             # Fine-tuning batch size
     max_steps: int = 30001                                          # Max number of fine-tuning steps
     save_steps: int = 5000                                          # Interval for checkpoint saving
     learning_rate: float = 3.5e-4                                   # Fine-tuning learning rate
-    grad_accumulation_steps: int = 2                                # Gradient accumulation steps
-    image_aug: bool = False                                         # Whether to train with image augmentations
-    shuffle_buffer_size: int = 100_00                               # Dataloader shuffle buffer size (can reduce if OOM)
+    grad_accumulation_steps: int = 1                                # Gradient accumulation steps
+    image_aug: bool = True                                         # Whether to train with image augmentations
+    shuffle_buffer_size: int = 16000                               # Dataloader shuffle buffer size (can reduce if OOM)
     save_latest_checkpoint_only: bool = True                        # Whether to save only one checkpoint per run and
-                                                                    #   continually overwrite the latest checkpoint
                                                                     #   (If False, saves all checkpoints)
     # LAM setting
     codebook_size: int = 16
@@ -311,14 +365,37 @@ class FinetuneConfig:
     # Tracking Parameters
     wandb_project: str = "univla-finetune"                          # Name of W&B project to log to (use default!)
     wandb_entity: str = "joonwoo-ahn"                              # Name of entity to log under
-    run_id_note: Optional[str] = CHECKOUT_NAME                               # Extra note for logging, Weights & Biases
+    run_id_note: Optional[str] = None                               # Extra note for logging, Weights & Biases (will be set to checkout_name)
     # run_id_note: Optional[str] = "norm_stats"
 
 
-
-@draccus.wrap()
 def finetune(cfg: FinetuneConfig) -> None:
     print(f"Fine-tuning UniVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
+
+    # Validate required arguments
+    if not cfg.data_root_dir or str(cfg.data_root_dir) == "":
+        raise ValueError("data_root_dir must be provided via --data_root_dir argument")
+    if not cfg.indices_for_state:
+        raise ValueError("indices_for_state must be provided via --indices_for_state argument")
+    if not cfg.indices_for_action:
+        raise ValueError("indices_for_action must be provided via --indices_for_action argument")
+    if not cfg.checkout_name:
+        raise ValueError("checkout_name must be provided via --checkout_name argument")
+
+    # Parse indices from string to list
+    indices_for_state = [int(x.strip()) for x in cfg.indices_for_state.split(',')]
+    indices_for_action = [int(x.strip()) for x in cfg.indices_for_action.split(',')]
+    
+    # Calculate dimensions
+    state_dim = len(indices_for_state)
+    action_dim = len(indices_for_action)
+    
+    print(f"State indices: {indices_for_state} (dim: {state_dim})")
+    print(f"Action indices: {indices_for_action} (dim: {action_dim})")
+
+    # Set run_id_note from checkout_name if not provided
+    if cfg.run_id_note is None:
+        cfg.run_id_note = cfg.checkout_name
 
     # [Validate] Ensure GPU Available & Set Device / Distributed Context
     assert torch.cuda.is_available(), "Fine-tuning assumes at least one GPU is available!"
@@ -344,14 +421,14 @@ def finetune(cfg: FinetuneConfig) -> None:
     #     # f"+b{cfg.batch_size * cfg.grad_accumulation_steps}"
     #     # f"+lr-{cfg.learning_rate}"
     # )
-    if cfg.use_lora:
-        exp_id += f"+lora-r{cfg.lora_rank}+dropout-{cfg.lora_dropout}"
-    if cfg.use_quantization:
-        exp_id += "+q-4bit"
-    if cfg.run_id_note is not None:
-        exp_id += f"--{cfg.run_id_note}"
-    if cfg.image_aug:
-        exp_id += "--image_aug"
+    # if cfg.use_lora:
+    #     exp_id += f"+lora-r{cfg.lora_rank}+dropout-{cfg.lora_dropout}"
+    # if cfg.use_quantization:
+    #     exp_id += "+q-4bit"
+    # if cfg.run_id_note is not None:
+    #     exp_id += f"--{cfg.run_id_note}"
+    # if cfg.image_aug:
+    #     exp_id += "--image_aug"
 
     # exp_id += f'=w-LowLevelDecoder-ws-{cfg.window_size}'
 
@@ -404,7 +481,8 @@ def finetune(cfg: FinetuneConfig) -> None:
 
     # Create Action Tokenizer
     action_tokenizer = ActionTokenizer(processor.tokenizer)
-    wrapped_model = Wrapped_Model(vla = vla, freeze_vla = cfg.freeze_vla, window_size=cfg.window_size).to(device_id)
+    wrapped_model = Wrapped_Model(vla = vla, freeze_vla = cfg.freeze_vla, window_size=cfg.window_size, 
+                                 state_dim=state_dim, action_dim=action_dim).to(device_id)
     
     trainable_total_params = sum(p.numel() for p in wrapped_model.parameters() if p.requires_grad)
     print('Total Trainable Params: ', trainable_total_params)
@@ -441,7 +519,9 @@ def finetune(cfg: FinetuneConfig) -> None:
         dataset_dir=cfg.data_root_dir,
         batch_size=cfg.batch_size,
         processor=processor,
-        window_size=cfg.window_size
+        window_size=cfg.window_size,
+        indices_for_state=indices_for_state,
+        indices_for_action=indices_for_action
     )
 
     # 2. 통계 저장 부분 (state 통계도 저장하도록 수정)
@@ -488,6 +568,10 @@ def finetune(cfg: FinetuneConfig) -> None:
                     input_ids_list = []
                     labels_list = []
                     hist_idx = 0
+
+                    if latent_action_idx_history.ndim == 1:
+                        latent_action_idx_history = latent_action_idx_history.unsqueeze(0)
+                        
                     # print(batch['with_hist'],latent_action_idx_history.shape)
                     for idx, latent_action_idx in enumerate(latent_action_idx_batch):
                         action_vocab = [f'<ACT_{i.item()}>' for i in latent_action_idx]   # [ACT_1, ACT_2, ... ACT_K]
@@ -537,6 +621,10 @@ def finetune(cfg: FinetuneConfig) -> None:
 
                     input_ids_list = []
                     labels_list = []
+
+                    if latent_action_idx_batch.ndim == 1:
+                        latent_action_idx_batch = latent_action_idx_batch.unsqueeze(0)
+                        
                     for idx, latent_action_idx in enumerate(latent_action_idx_batch):
                         action_vocab = [f'<ACT_{i.item()}>' for i in latent_action_idx]   # [ACT_1, ACT_2, ... ACT_K]
 
@@ -682,5 +770,29 @@ def finetune(cfg: FinetuneConfig) -> None:
 
 
 if __name__ == "__main__":
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Fine-tune UniVLA model")
+    parser.add_argument("--data_root_dir", type=str, help="Path to data directory")
+    parser.add_argument("--indices_for_state", type=str, help="Comma-separated state indices")
+    parser.add_argument("--indices_for_action", type=str, help="Comma-separated action indices")
+    parser.add_argument("--checkout_name", type=str, help="Experiment name for logging")
+    
+    args = parser.parse_args()
+    
+    # Create config with command line arguments
+    config = FinetuneConfig()
+    
+    # Override config with command line arguments if provided
+    if args.data_root_dir:
+        config.data_root_dir = Path(args.data_root_dir)
+    if args.indices_for_state:
+        config.indices_for_state = args.indices_for_state
+    if args.indices_for_action:
+        config.indices_for_action = args.indices_for_action
+    if args.checkout_name:
+        config.checkout_name = args.checkout_name
+    
     # torch.multiprocessing.set_start_method('spawn', force=True)
-    finetune()
+    finetune(config)

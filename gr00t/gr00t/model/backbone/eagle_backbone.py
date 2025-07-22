@@ -104,7 +104,14 @@ class EagleBackbone(nn.Module):
             for k, v in vl_input.items()
             if k.startswith(eagle_prefix)
         }
-        del eagle_input["image_sizes"]
+        
+        # Only delete image_sizes if it exists (it won't exist when no images are present)
+        if "image_sizes" in eagle_input:
+            del eagle_input["image_sizes"]
+        
+        # Remove content key if it exists (it's not expected by the Eagle model)
+        if "content" in eagle_input:
+            del eagle_input["content"]
 
         eagle_output = self.eagle_model(**eagle_input, output_hidden_states=True, return_dict=True)
         eagle_features = eagle_output.hidden_states[self.select_layer]

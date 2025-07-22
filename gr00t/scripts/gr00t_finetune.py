@@ -44,7 +44,7 @@ class ArgsConfig:
     output_dir: str = "/tmp/gr00t"
     """Directory to save model checkpoints."""
 
-    data_config: Literal[tuple(DATA_CONFIG_MAP.keys())] = "fourier_gr1_arms_only"
+    data_config: Literal[tuple(DATA_CONFIG_MAP.keys())] = "allex_bimanual"
     """Data configuration name from DATA_CONFIG_MAP, we assume all datasets have the same data config"""
 
     # Training parameters
@@ -124,6 +124,9 @@ class ArgsConfig:
 
     # Action dimension
     action_dim: int = 32
+    """Action dimension for the model output."""
+    
+
 
 
 #####################################################################################
@@ -194,6 +197,32 @@ def main(config: ArgsConfig):
     # Set the model's compute_dtype to bfloat16
     model.compute_dtype = "bfloat16"
     model.config.compute_dtype = "bfloat16"
+
+    # Initialize newly added parameters with smaller values to prevent gradient explosion
+    # Target specific layers that were resized due to action_dim change
+    with torch.no_grad():
+        # Initialize action encoder W1 layer
+        if hasattr(model.action_head.action_encoder, 'W1') and hasattr(model.action_head.action_encoder.W1, 'W'):
+            torch.nn.init.normal_(model.action_head.action_encoder.W1.W, mean=0.0, std=0.01)
+        
+        # Initialize action decoder layer2
+        if hasattr(model.action_head.action_decoder, 'layer2'):
+            if hasattr(model.action_head.action_decoder.layer2, 'W'):
+                torch.nn.init.normal_(model.action_head.action_decoder.layer2.W, mean=0.0, std=0.01)
+            if hasattr(model.action_head.action_decoder.layer2, 'b'):
+                torch.nn.init.zeros_(model.action_head.action_decoder.layer2.b)
+        
+        # # Manually resize action head layers if needed
+        # if hasattr(model.action_head, 'action_decoder') and hasattr(model.action_head.action_decoder, 'layer2'):
+        #     if hasattr(model.action_head.action_decoder.layer2, 'W'):
+        #         current_dim = model.action_head.action_decoder.layer2.W.shape[0]
+        #         if current_dim != config.action_dim:
+        #             print(f"Resizing action decoder layer2 from {current_dim} to {config.action_dim}")
+        #             # Create new layer with correct dimensions
+        #             new_W = torch.nn.Parameter(torch.randn(config.action_dim, model.action_head.action_decoder.layer2.W.shape[1]) * 0.01)
+        #             new_b = torch.nn.Parameter(torch.zeros(config.action_dim))
+        #             model.action_head.action_decoder.layer2.W = new_W
+        #             model.action_head.action_decoder.layer2.b = new_b
 
     if config.lora_rank > 0:
         model = get_lora_model(

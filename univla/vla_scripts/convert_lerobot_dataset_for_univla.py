@@ -10,10 +10,13 @@ from pathlib import Path
 # 사용자 설정 영역 (이전과 동일, 경로 확인)
 # ==============================================================================
 
-base_input_dir = "/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_pos_rightarm_truncated"
-output_dir = "/converted_data_for_univla"
+# base_input_dir과 output_dir은 shell script에서 동적으로 설정됩니다
+# 기본값은 하드코딩되어 있지만, 실제로는 명령줄 인수로 덮어씌워집니다
+base_input_dir = "/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/250716/allex_gesture_easy_all_fps50"
+output_dir = "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/converted_data_for_univla"
 
-VIDEO_KEY = 'observation.images.sideview'
+# VIDEO_KEY = 'observation.images.sideview'
+VIDEO_KEY = 'observation.images.robot0_robotview'
 
 STATE_COLUMN_NAME = 'observation.state'
 ACTION_COLUMN_NAME = 'action'
@@ -69,9 +72,33 @@ def process_episode(parquet_file, video_dir_template, output_root):
         f.write(instruction)
 
 def main():
-    final_output_dir = os.path.join(output_dir, os.path.basename(base_input_dir))
-    video_dir_template = os.path.join(base_input_dir, 'videos/chunk-000')
-    data_dir = os.path.join(base_input_dir, 'data/chunk-000')
+    import sys
+    
+    # 명령줄 인수로 경로를 받을 수 있도록 수정
+    if len(sys.argv) > 1:
+        # 첫 번째 인수가 입력 디렉토리
+        actual_input_dir = sys.argv[1]
+        print(f"명령줄에서 받은 입력 디렉토리: {actual_input_dir}")
+    else:
+        actual_input_dir = base_input_dir
+        print(f"기본 입력 디렉토리 사용: {actual_input_dir}")
+    
+    if len(sys.argv) > 2:
+        # 두 번째 인수가 출력 디렉토리
+        actual_output_dir = sys.argv[2]
+        print(f"명령줄에서 받은 출력 디렉토리: {actual_output_dir}")
+    else:
+        actual_output_dir = output_dir
+        print(f"기본 출력 디렉토리 사용: {actual_output_dir}")
+    
+    # 입력 데이터의 마지막 폴더명을 그대로 사용하되, 명시적으로 설정
+    input_folder_name = os.path.basename(actual_input_dir)
+    final_output_dir = os.path.join(actual_output_dir, input_folder_name)
+    
+    print(f"입력 폴더명: {input_folder_name}")
+    print(f"출력 디렉토리: {final_output_dir}")
+    video_dir_template = os.path.join(actual_input_dir, 'videos/chunk-000')
+    data_dir = os.path.join(actual_input_dir, 'data/chunk-000')
 
     # 필요한 비디오 경로가 존재하는지 확인
     if not os.path.isdir(os.path.join(video_dir_template, VIDEO_KEY)):

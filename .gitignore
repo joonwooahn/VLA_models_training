@@ -1,0 +1,83 @@
+# VLA Models Training - Git Ignore File
+
+# Training outputs and checkpoints
+runs/
+*/runs/
+univla/vla_scripts/runs/
+gr00t/runs/
+pi0/runs/
+
+# Model files and checkpoints
+univla/vla_scripts/univla-7b/
+univla/vla_scripts/univla-latent-action-model/
+gr00t/models/
+pi0/models/
+
+# Converted data directories
+converted_data_for_univla/
+*/converted_data_for_univla/
+univla/vla_scripts/converted_data_for_univla/
+gr00t/converted_data/
+pi0/converted_data/
+
+# Log files
+_logs/
+*.log
+slurm-*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.backup
+adapter-tmp/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment files
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large data files
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+# Model weights (large files)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# WandB logs
+wandb/ 

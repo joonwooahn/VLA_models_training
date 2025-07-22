@@ -73,9 +73,31 @@ def calculate_dataset_statistics(parquet_paths: list[Path]) -> dict:
     dataset_statistics = {}
     for le_modality in all_low_dim_data.columns:
         print(f"Computing statistics for {le_modality}...")
-        np_data = np.vstack(
-            [np.asarray(x, dtype=np.float32) for x in all_low_dim_data[le_modality]]
-        )
+        #np_data = np.vstack(
+        #    [np.asarray(x, dtype=np.float32) for x in all_low_dim_data[le_modality]]
+        #)
+        try:
+            # Attempt to stack and convert to float32.
+            # This will raise an error for non-numeric types like strings.
+            np_data_stacked = np.vstack(
+                [np.asarray(x) for x in all_low_dim_data[le_modality]]
+            )
+            # Check if the stacked data can be cast to float32
+            if not np.issubdtype(np_data_stacked.dtype, np.number) and not np.issubdtype(np_data_stacked.dtype, np.bool_):
+                 # If it's not a numeric or boolean type that can be safely converted, skip.
+                if np_data_stacked.dtype.kind not in 'biufc': # check for bool, int, unsigned int, float, complex
+                    print(f"Skipping statistics for non-numeric column {le_modality} with dtype {np_data_stacked.dtype}")
+                    continue
+            
+            # If it's already numeric or can be safely cast, proceed
+            np_data = np.vstack(
+                [np.asarray(x, dtype=np.float32) for x in all_low_dim_data[le_modality]]
+            )
+
+        except ValueError:
+            # If conversion to float32 fails (e.g., for string data), skip this column
+            print(f"Skipping statistics for column {le_modality} due to data type mismatch.")
+            continue        
         dataset_statistics[le_modality] = {
             "mean": np.mean(np_data, axis=0).tolist(),
             "std": np.std(np_data, axis=0).tolist(),
@@ -263,9 +285,18 @@ class LeRobotSingleDataset(Dataset):
 
         # 1. Modality metadata
         modality_meta_path = self.dataset_path / LE_ROBOT_MODALITY_FILENAME
-        assert (
-            modality_meta_path.exists()
-        ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
+        # assert (
+        #     modality_meta_path.exists()
+        # ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
+        if not modality_meta_path.exists():
+            # If not found in dataset path, try to use the global modality.json from VLA_models_training
+            global_modality_path = Path("/virtual_lab/rlwrld/david/VLA_models_training/modality.json")
+            if global_modality_path.exists():
+                modality_meta_path = global_modality_path
+            else:
+                assert (
+                    modality_meta_path.exists()
+                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure /virtual_lab/rlwrld/david/VLA_models_training/modality.json exists"
 
         # 1.1. State and action modalities
         simplified_modality_meta: dict[str, dict] = {}
@@ -414,10 +445,21 @@ class LeRobotSingleDataset(Dataset):
 
     def _get_lerobot_modality_meta(self) -> LeRobotModalityMetadata:
         """Get the metadata for the LeRobot dataset."""
+        # First try to find modality.json in the dataset path
         modality_meta_path = self.dataset_path / LE_ROBOT_MODALITY_FILENAME
-        assert (
-            modality_meta_path.exists()
-        ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
+        # assert (
+        #     modality_meta_path.exists()
+        # ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
+        if not modality_meta_path.exists():
+            # If not found in dataset path, try to use the global modality.json from VLA_models_training
+            global_modality_path = Path("/virtual_lab/rlwrld/david/VLA_models_training/modality.json")
+            if global_modality_path.exists():
+                modality_meta_path = global_modality_path
+            else:
+                assert (
+                    modality_meta_path.exists()
+                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure /virtual_lab/rlwrld/david/VLA_models_training/modality.json exists"
+        
         with open(modality_meta_path, "r") as f:
             modality_meta = LeRobotModalityMetadata.model_validate(json.load(f))
         return modality_meta

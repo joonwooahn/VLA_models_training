@@ -120,12 +120,57 @@ def train(cfg: TrainPipelineConfig):
         set_seed(cfg.seed)
 
     # Check device is available
-    device = get_safe_torch_device(cfg.policy.device, log=True)
+    # device = get_safe_torch_device(cfg.policy.device, log=True)
     torch.backends.cudnn.benchmark = True
     torch.backends.cuda.matmul.allow_tf32 = True
 
     logging.info("Creating dataset")
     dataset = make_dataset(cfg)
+
+    # Dynamically set use_extended_dim, ext_state_dim and ext_action_dim based on dataset
+    # Get actual dimensions from dataset
+    sample_batch = next(iter(torch.utils.data.DataLoader(dataset, batch_size=1)))
+    
+    actual_state_dim = None
+    actual_action_dim = None
+    
+    if 'observation.state' in sample_batch:
+        actual_state_dim = sample_batch['observation.state'].shape[-1]
+        logging.info(f"Detected state dimension: {actual_state_dim}")
+    
+    if 'action' in sample_batch:
+        actual_action_dim = sample_batch['action'].shape[-1]
+        logging.info(f"Detected action dimension: {actual_action_dim}")
+    
+    # Determine if we should use extended dimensions
+    if hasattr(cfg.policy, 'max_state_dim') and hasattr(cfg.policy, 'max_action_dim'):
+        max_state_dim = cfg.policy.max_state_dim
+        max_action_dim = cfg.policy.max_action_dim
+        
+        # Check if dimensions exceed the standard limits
+        use_extended = False
+        if actual_state_dim and actual_state_dim > max_state_dim:
+            use_extended = True
+            logging.info(f"State dimension {actual_state_dim} > {max_state_dim}, using extended dimensions")
+        if actual_action_dim and actual_action_dim > max_action_dim:
+            use_extended = True
+            logging.info(f"Action dimension {actual_action_dim} > {max_action_dim}, using extended dimensions")
+        
+        # Update use_extended_dim
+        if hasattr(cfg.policy, 'use_extended_dim'):
+            if cfg.policy.use_extended_dim != use_extended:
+                logging.info(f"Updating use_extended_dim from {cfg.policy.use_extended_dim} to {use_extended}")
+                cfg.policy.use_extended_dim = use_extended
+    
+    # Update ext_state_dim and ext_action_dim if using extended dimensions
+    if hasattr(cfg.policy, 'use_extended_dim') and cfg.policy.use_extended_dim:
+        if actual_state_dim and hasattr(cfg.policy, 'ext_state_dim') and cfg.policy.ext_state_dim != actual_state_dim:
+            logging.info(f"Updating ext_state_dim from {cfg.policy.ext_state_dim} to {actual_state_dim}")
+            cfg.policy.ext_state_dim = actual_state_dim
+        
+        if actual_action_dim and hasattr(cfg.policy, 'ext_action_dim') and cfg.policy.ext_action_dim != actual_action_dim:
+            logging.info(f"Updating ext_action_dim from {cfg.policy.ext_action_dim} to {actual_action_dim}")
+            cfg.policy.ext_action_dim = actual_action_dim
 
     # Create environment used for evaluating checkpoints during training on simulation data.
     # On real-world data, no need to create an environment as evaluations are done outside train.py,
@@ -140,6 +185,9 @@ def train(cfg: TrainPipelineConfig):
         cfg=cfg.policy,
         ds_meta=dataset.meta,
     )
+    
+    # Use single GPU for training
+    device = get_device_from_parameters(policy)
 
     logging.info("Creating optimizer and scheduler")
     optimizer, lr_scheduler = make_optimizer_and_scheduler(cfg, policy)
