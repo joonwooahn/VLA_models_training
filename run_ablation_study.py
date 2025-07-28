@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Constants to eliminate duplication
 SUPPORTED_VLA_MODELS = ["gr00t", "pi0", "pi0fast", "univla"]
-VIDEO_SUPPORTED_MODELS = ["pi0", "pi0fast", "gr00t"]  # Models that support video modes
+VIDEO_SUPPORTED_MODELS = ["gr00t", "pi0", "pi0fast"]  # Models that support video modes
 SINGLE_GPU_MODELS = ["gr00t", "pi0", "pi0fast"]  # Models that use single GPU
 MULTI_GPU_MODELS = ["univla"]  # Models that use multiple GPUs
 
@@ -136,12 +136,16 @@ def get_action_indices(modality_config, action_mode):
 def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False, video_mode=None):
     # GPU 수 자동 결정
     gpus = get_gpu_count(vla_model)
-    
+
     # Extract task_name from data_dir (last part of the path)
     task_name = Path(data_dir).name
     
     # Create checkpoint name based on task and ablation conditions
-    checkpoint_name = f"{task_name}/{state_mode}_{action_mode}_{video_mode}"
+    if is_video_supported_model(vla_model):
+        checkpoint_name = f"{task_name}/{state_mode}_{action_mode}_{video_mode}"
+    else:
+        # univla는 video_mode가 없으므로 robotview로 고정
+        checkpoint_name = f"{task_name}/{state_mode}_{action_mode}_robotview"
     
     """Run the training script with calculated indices"""
     
@@ -185,7 +189,11 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
     script_path.chmod(0o755)
     
     # job-name에서 모델명 제거하고 task_name 포함
-    job_name = f"{state_mode}_{action_mode}_{video_mode}"
+    if is_video_supported_model(vla_model):
+        job_name = f"{vla_model}_{state_mode}_{action_mode}_{video_mode}"
+    else:
+        # univla는 video_mode가 없으므로 robotview로 고정
+        job_name = f"{vla_model}_{state_mode}_{action_mode}_robotview"
     
     # 모델별 추가 인수 전달 (공통)
     if is_video_supported_model(vla_model):
@@ -206,7 +214,7 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
         cmd = [
             "sbatch",
             "--job-name", job_name,
-            "--comment", f"ablation study: {state_mode} + {action_mode} + {video_mode}",
+            "--comment", f"ablation study: {state_mode} + {action_mode} + {video_mode if is_video_supported_model(vla_model) else 'robotview'}",
             f"--gpus={gpus}",
             "--output", f"{log_dir}/slurm-%j-%x.log",
             "--error", f"{log_dir}/slurm-%j-%x.log",
@@ -314,6 +322,25 @@ def run_pi0_dataset_conversion(data_dir):
 def run_all_combinations(vla_model, data_dir, use_sbatch=False):
     """Run all combinations of state_mode and action_mode"""
     
+    # Load modality configuration once for indices calculation
+    modality_config = load_modality_config()
+    
+    # Print indices summary for all combinations
+    print(f"\n{'='*60}")
+    print(f"INDICES SUMMARY for {vla_model.upper()}")
+    print(f"{'='*60}")
+    
+    for state_mode in STATE_MODES:
+        for action_mode in ACTION_MODES:
+            state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode)
+            print(f"{state_mode}_{action_mode}:")
+            print(f"  State indices: {state_indices_str}")
+            print(f"  Action indices: {action_indices_str}")
+            print(f"  State dim: {len(state_indices)}, Action dim: {len(action_indices)}")
+    
+    print(f"{'='*60}\n")
+    # exit(1)
+    
     # video_modes는 pi0, pi0fast, gr00t에만 적용
     if is_video_supported_model(vla_model):
         video_modes = VIDEO_MODES
@@ -340,7 +367,7 @@ def run_all_combinations(vla_model, data_dir, use_sbatch=False):
                     print(f"[{current_combination}/{total_combinations}] {state_mode} + {action_mode} + {video_mode}: ", end="")
                 else:
                     print(f"[{current_combination}/{total_combinations}] {state_mode} + {action_mode}: ", end="")
-                
+            
                 # Create unique timestamp for each combination
                 unique_timestamp = base_timestamp + current_combination
                 
@@ -362,7 +389,7 @@ def run_all_combinations(vla_model, data_dir, use_sbatch=False):
                         else:
                             results.append({'state_mode': state_mode, 'action_mode': action_mode, 'success': success})
                         print("✅ success" if success else "❌ failed")
-                        
+                            
                 except Exception as e:
                     print(f"❌ error: {e}")
                     if not use_sbatch:
@@ -379,22 +406,24 @@ def run_all_combinations(vla_model, data_dir, use_sbatch=False):
 def main():
     parser = argparse.ArgumentParser(description="Run ablation study for VLA models")
     parser.add_argument("--vla_model", type=str, required=False,
-                       default="univla", choices=SUPPORTED_VLA_MODELS,
+                       choices=SUPPORTED_VLA_MODELS,
                        help="VLA model to use for training (pi0 will convert data first, then train)")
     parser.add_argument("--data_dir", type=str, required=False,
-                       default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/250718/allex_gesture_easy_all",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_all",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_lift_cylinder",
+                       default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder",
                        help="Path to input data directory")
     parser.add_argument("--state_mode", type=str, required=False,
                     #    choices=["pos_only", "pos_vel", "pos_vel_torq"],
-                    #    help="State mode: pos_only, pos_vel, or pos_vel_torq")
                        choices=STATE_MODES,
-                       help="State mode: pos_only, or pos_vel")
+                       help="State mode: pos_only or pos_vel")
+                    #    help="State mode: pos_only, pos_vel or pos_vel_torq")
     parser.add_argument("--action_mode", type=str, required=False,
                        choices=ACTION_MODES,
                        help="Action mode: right_arm or dual_arm")
     parser.add_argument("--video_mode", type=str, required=False, default="multiview",
                        choices=VIDEO_MODES,
-                       help="Video mode: robotview or multiview (only for pi0/pi0fast)")
+                       help="Video mode: robotview or multiview (only for gr00t/pi0/pi0fast)")
     parser.add_argument("--run_mode_all", action="store_true",
                        help="Run all combinations of state_mode and action_mode")
     parser.add_argument("--sbatch", action="store_true",
@@ -448,9 +477,9 @@ def main():
         else:
             # Run for specific model
             success = run_all_combinations(args.vla_model, args.data_dir, use_sbatch=args.sbatch)
-            if not success:
-                print("Some combinations failed. Check the summary above.")
-                sys.exit(1)
+        if not success:
+            print("Some combinations failed. Check the summary above.")
+            sys.exit(1)
     else:
         # Single mode - validate required arguments
         if args.vla_model is None:
@@ -483,5 +512,12 @@ if __name__ == "__main__":
     main() 
 
 ### 최초로 task 마다 한번 수행 해야함. 
+# 카메라에 따라, modality_config.py 수정 필요
 # python run_ablation_study.py --pi0_dataset_convert
-# python run_ablation_study.py --vla_model univla --state_mode pos_vel_torq --action_mode dual_arm 
+# python run_ablation_study.py --vla_model univla --state_mode pos_vel --action_mode dual_arm 
+
+### 체크포인트 삭제
+# cd /virtual_lab/rlwrld/david/VLA_models_training/_checkpoints
+# find gr00t/allex_gesture_easy_all* -type d \( -name "checkpoint-10000" -o -name "checkpoint-20000" \) -exec rm -rf {} +
+# find pi0/allex_gesture_easy_all* -type d \( -name "005000" -o -name "010000" -o -name "015000" -o -name "020000" -o -name "025000" \) -exec rm -rf {} +
+# find univla/allex_gesture_easy_all* -type d \( -name "10000" -o -name "20000" \) -exec rm -rf {} +

@@ -96,7 +96,7 @@
             "original_key": "observation.images.robot0_robotview"
         },
         "camera_ext": {
-            "original_key": "observation.images.sideview"
+            "original_key": "observation.images.robot0_eye_in_right_hand"
         }
     },
     "annotation": {
