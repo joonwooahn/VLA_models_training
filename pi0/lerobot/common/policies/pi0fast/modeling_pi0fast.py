@@ -472,7 +472,12 @@ class PI0FAST(nn.Module):
                 param.data = param.data.to(dtype=torch_precision)
         self.set_requires_grad()
         self.image_keys = self.config.image_features.keys()
+        # Set ignore_index with fallback for different config structures
+        if hasattr(self.pi0_paligemma.config, 'ignore_index'):
         self.ignore_index = self.pi0_paligemma.config.ignore_index
+        else:
+            # Default ignore_index for PaliGemma
+            self.ignore_index = -100
         self.padding_side = self.config.padding_side
 
     def set_requires_grad(self):

@@ -1,0 +1,35 @@
+{
+    "state": {
+        "torso_joints": {
+            "start": 0,
+            "end": 4
+        },
+        "right_arm_joints": {
+            "start": 4,
+            "end": 11
+        }
+    },
+    "action": {
+        "right_arm_eef_pos": {
+            "start": 0,
+            "end": 6
+        },
+        "Grasping": {
+            "start": 6,
+            "end": 7
+        }
+    },
+    "video": {
+        "camera_ego": {
+            "original_key": "observation.images.robot0_robotview"
+        },
+        "camera_ext": {
+            "original_key": "observation.images.robot0_eye_in_right_hand"
+        }
+    },
+    "annotation": {
+        "human.task_description": {
+            "original_key": "task_index"
+        }
+    }
+} 

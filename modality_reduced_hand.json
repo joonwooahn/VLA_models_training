@@ -1,0 +1,43 @@
+{
+    "state": {
+        "torso_joints": {
+            "start": 0,
+            "end": 4
+        },
+        "head_joints": {
+            "start": 0,
+            "end": 0
+        },
+        "right_arm_joints": {
+            "start": 4,
+            "end": 11
+        },
+        "right_hand_joints": {
+            "start": 11,
+            "end": 19
+        }
+    },
+    "action": {
+        "right_arm_eef_pos": {
+            "start": 0,
+            "end": 6
+        },
+        "right_finger_joints": {
+            "start": 6,
+            "end": 10
+        }
+    },
+    "video": {
+        "camera_ego": {
+            "original_key": "observation.images.robot0_robotview"
+        },
+        "camera_ext": {
+            "original_key": "observation.images.robot0_eye_in_right_hand"
+        }
+    },
+    "annotation": {
+        "human.task_description": {
+            "original_key": "task_index"
+        }
+    }
+} 
