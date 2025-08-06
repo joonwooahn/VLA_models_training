@@ -213,8 +213,9 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
     # GPU 수 자동 결정
     gpus = get_gpu_count(vla_model)
 
-    # Detect robot type from data_dir
+    # Detect robot type and sim/real from data_dir
     robot_type = detect_robot_type(data_dir)
+    sim_or_real = detect_sim_or_real(data_dir)
 
     # Extract task_name from data_dir (last part of the path)
     task_name = Path(data_dir).name
@@ -280,7 +281,7 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
     # 모델별 추가 인수 전달 (공통)
     if is_video_supported_model(vla_model):
         # video_mode를 지원하는 모델들
-        additional_args = [state_mode, action_mode, video_mode, vla_model, robot_type]
+        additional_args = [state_mode, action_mode, video_mode, vla_model, robot_type, sim_or_real]
     else:
         # univla는 video_mode를 지원하지 않으므로 추가 인수 없음
         additional_args = []

@@ -6,7 +6,7 @@
 
 # 명령줄 인수 처리
 if [ $# -lt 7 ]; then
-    echo "Usage: $0 <JOB_NAME> <DATA_DIR> <OUTPUT_DATA> <CONDA_ENV> <STATE_INDICES> <ACTION_INDICES> <CHECKPOINT_NAME> [STATE_MODE] [ACTION_MODE] [VIDEO_MODE] [VLA_MODEL] [ROBOT_TYPE]"
+    echo "Usage: $0 <JOB_NAME> <DATA_DIR> <OUTPUT_DATA> <CONDA_ENV> <STATE_INDICES> <ACTION_INDICES> <CHECKPOINT_NAME> [STATE_MODE] [ACTION_MODE] [VIDEO_MODE] [VLA_MODEL] [ROBOT_TYPE] [SIM_OR_REAL]"
     exit 1
 fi
 
@@ -22,6 +22,7 @@ ACTION_MODE="${9:-right_arm}"
 VIDEO_MODE="${10:-robotview}"
 VLA_MODEL="${11:-gr00t}"
 ROBOT_TYPE="${12:-allex}"
+SIM_OR_REAL="${13:-real}"
 
 # 로그 디렉토리 생성
 mkdir -p "_logs/gr00t"
@@ -53,10 +54,12 @@ fi
 if [ "$ROBOT_TYPE" = "franka" ]; then
     DATA_CONFIG="franka_${STATE_MODE}_${ACTION_MODE}_${VIDEO_MODE}"
 else
-    DATA_CONFIG="${STATE_MODE}_${ACTION_MODE}_${VIDEO_MODE}"
+    # Allex robot: include sim/real information
+    DATA_CONFIG="${ROBOT_TYPE}_${SIM_OR_REAL}_${STATE_MODE}_${ACTION_MODE}_${VIDEO_MODE}"
 fi
 
 echo "ROBOT_TYPE: $ROBOT_TYPE"
+echo "SIM_OR_REAL: $SIM_OR_REAL"
 echo "DATA_CONFIG: $DATA_CONFIG"
 echo "ACTION_DIM: $ACTION_DIM"
 echo "MAX_STEPS: $MAX_STEPS"
