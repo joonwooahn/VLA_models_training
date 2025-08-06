@@ -33,6 +33,13 @@ def detect_robot_type(data_dir):
     else:
         return "allex"
 
+def detect_sim_or_real(data_dir):
+    """Detect sim or real from data directory path"""
+    if "sim" in str(data_dir).lower():
+        return "sim"
+    else:
+        return "real"
+
 def get_action_modes_for_robot(robot_type):
     """Get supported action modes for the robot type"""
     if robot_type == "franka":
@@ -62,31 +69,35 @@ def calculate_indices(modality_config, state_mode, action_mode, robot_type="alle
     
     return state_indices, action_indices, state_indices_str, action_indices_str
 
-def load_modality_config(robot_type="allex"):
-    """Load modality configuration from modality.json or modality_franka.json"""
-    if robot_type == "franka":
-        modality_path = Path(__file__).parent / "modality_franka.json"
-    else:
-        # For allex robot, try to find the appropriate modality file
-        base_path = Path(__file__).parent
-        possible_files = [
-            "modality.json",
-            "modality_allex_real.json", 
-            "modality_allex_sim.json"
-        ]
-        
-        modality_path = None
-        for filename in possible_files:
-            file_path = base_path / filename
-            if file_path.exists():
-                modality_path = file_path
-                break
-        
-        if modality_path is None:
-            raise FileNotFoundError(f"No modality configuration file found for allex robot. Tried: {possible_files}")
+def load_modality_config(robot_type="allex", data_dir=None):
+    """Load modality configuration from appropriate modality file"""
+    base_path = Path(__file__).parent
     
-    with open(modality_path, 'r') as f:
-        return json.load(f)
+    if robot_type == "franka":
+        candidate_files = ["modality_franka.json"]
+    elif robot_type == "allex":
+        if data_dir:
+            sim_or_real = detect_sim_or_real(data_dir)
+            if sim_or_real == "real":
+                candidate_files = ["modality_allex_real.json", "modality.json"]
+            else:
+                candidate_files = ["modality_allex_sim.json", "modality.json"]
+        else:
+            # If data_dir is None, try both files in preferred order
+            candidate_files = ["modality_allex_real.json", "modality_allex_sim.json", "modality.json"]
+    else:
+        # Fallback for unknown robot types
+        candidate_files = ["modality.json"]
+    
+    # Try to find the first existing file
+    for filename in candidate_files:
+        modality_path = base_path / filename
+        if modality_path.exists():
+            with open(modality_path, 'r') as f:
+                return json.load(f)
+    
+    # If no file found, raise an error
+    raise FileNotFoundError(f"No modality configuration file found for {robot_type} robot. Tried: {candidate_files}")
 
 def get_state_indices(modality_config, state_mode, action_mode, robot_type="allex"):
     """Get state indices based on state_mode and action_mode, excluding head_joints for training."""
@@ -218,7 +229,7 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
     """Run the training script with calculated indices"""
     
     # Load modality configuration
-    modality_config = load_modality_config(robot_type)
+    modality_config = load_modality_config(robot_type, data_dir)
     
     # Calculate indices using helper function
     state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode, robot_type)
@@ -375,7 +386,7 @@ def run_pi0_dataset_conversion(data_dir):
     task_name = Path(data_dir).name
     
     # Load modality configuration once
-    modality_config = load_modality_config(robot_type)
+    modality_config = load_modality_config(robot_type, data_dir)
     
     results = []
     
@@ -427,7 +438,7 @@ def run_all_combinations(vla_model, data_dir):
     action_modes = get_action_modes_for_robot(robot_type)
     
     # Load modality configuration once for indices calculation
-    modality_config = load_modality_config(robot_type)
+    modality_config = load_modality_config(robot_type, data_dir)
     
     # Print indices summary for all combinations
     print(f"\n{'='*60}")
@@ -605,11 +616,11 @@ def run_all_combinations(vla_model, data_dir):
                             
                 except Exception as e:
                     print(f"❌ error: {e}")
-                    if not use_sbatch:
-                        if is_video_supported_model(vla_model):
-                            results.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode, 'success': False, 'error': str(e)})
-                        else:
-                            results.append({'state_mode': state_mode, 'action_mode': action_mode, 'success': False, 'error': str(e)})
+                    # Always use SLURM mode now, so add to results for tracking
+                    if is_video_supported_model(vla_model):
+                        results.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode, 'success': False, 'error': str(e)})
+                    else:
+                        results.append({'state_mode': state_mode, 'action_mode': action_mode, 'success': False, 'error': str(e)})
     
     print(f"\nSummary: {len(job_ids)} jobs submitted")
     import os

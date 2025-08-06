@@ -34,18 +34,6 @@ echo "✅ Conda environment 'gr00t_vla' activated."
 # 스크립트가 실행되는 디렉토리를 gr00t 디렉토리로 변경
 cd /virtual_lab/rlwrld/david/VLA_models_training/gr00t
 
-# Franka 로봇인 경우 modality_franka.json을 modality.json으로 임시 복사
-if [ "$ROBOT_TYPE" = "franka" ]; then
-    echo "Using franka modality configuration..."
-    # Backup original modality.json if it exists
-    if [ -f "/virtual_lab/rlwrld/david/VLA_models_training/modality.json" ]; then
-        cp "/virtual_lab/rlwrld/david/VLA_models_training/modality.json" "/virtual_lab/rlwrld/david/VLA_models_training/modality.json.backup"
-    fi
-    # Copy franka modality configuration
-    cp "/virtual_lab/rlwrld/david/VLA_models_training/modality_franka.json" "/virtual_lab/rlwrld/david/VLA_models_training/modality.json"
-    echo "✅ Franka modality configuration applied."
-fi
-
 # Action dimension 설정 (ROBOT_TYPE과 ACTION_MODE에 따라)
 if [ "$ROBOT_TYPE" = "franka" ]; then
     # Franka robot: arm_eef_pos (6) + finger_joints (6) = 12
@@ -102,16 +90,3 @@ python scripts/gr00t_finetune.py \
    --action_dim "$ACTION_DIM"
 
 echo "Gr00t training completed!"
-
-# Franka 로봇인 경우 원본 modality.json 복원
-if [ "$ROBOT_TYPE" = "franka" ]; then
-    echo "Restoring original modality configuration..."
-    if [ -f "/virtual_lab/rlwrld/david/VLA_models_training/modality.json.backup" ]; then
-        mv "/virtual_lab/rlwrld/david/VLA_models_training/modality.json.backup" "/virtual_lab/rlwrld/david/VLA_models_training/modality.json"
-        echo "✅ Original modality configuration restored."
-    else
-        # If no backup exists, remove the franka modality file
-        rm -f "/virtual_lab/rlwrld/david/VLA_models_training/modality.json"
-        echo "✅ Franka modality configuration removed."
-    fi
-fi
