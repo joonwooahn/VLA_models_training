@@ -860,7 +860,20 @@ class LeRobotSingleDataset(Dataset):
         if original_key is None:
             original_key = key
         for i in range(len(step_indices)):
-            task_indices.append(self.curr_traj_data[original_key][step_indices[i]].item())
+            value = self.curr_traj_data[original_key][step_indices[i]]
+            # Handle both numeric and string values
+            if hasattr(value, 'item'):
+                task_indices.append(value.item())
+            else:
+                # If it's a string, try to convert to int for task_index
+                if original_key == "task_index":
+                    try:
+                        task_indices.append(int(value))
+                    except (ValueError, TypeError):
+                        # If conversion fails, use the string as is
+                        task_indices.append(value)
+                else:
+                    task_indices.append(value)
         return self.tasks.loc[task_indices]["task"].tolist()
 
     def get_data_by_modality(

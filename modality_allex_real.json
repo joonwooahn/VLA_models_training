@@ -33,8 +33,8 @@
         }
     },
     "annotation": {
-        "language_instruction": {
-            "original_key": "language_instruction"
+        "human.task_description": {
+            "original_key": "task_index"
         }
     }
 } 
