@@ -619,6 +619,8 @@ def main():
                     #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder",
                     ### franka dataset
                     #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/franka_lift_cylinder",
+                    ### real allex dataset
+                        default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_real_lift_bottle",
                     ###
                        help="Path to input data directory")
     parser.add_argument("--state_mode", type=str, required=False,

@@ -83,11 +83,11 @@ OUTPUT_DIR="/virtual_lab/rlwrld/david/VLA_models_training/_checkpoints/gr00t/${C
 # Gr00t 훈련 실행
 if [ "$ROBOT_TYPE" = "franka" ]; then
     # Franka robot: shorter training for faster iteration
-    MAX_STEPS=10000
-    SAVE_STEPS=2000
+    MAX_STEPS=15000
+    SAVE_STEPS=3000
 else
     # Allex robot: original settings
-    MAX_STEPS=10000
+    MAX_STEPS=16000
     SAVE_STEPS=2000
 fi
 
