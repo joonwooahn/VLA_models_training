@@ -748,6 +748,18 @@ def main():
             print("Error: --video_mode is required for pi0/pi0fast/diffusion/act models")
             sys.exit(1)
         
+        # Check if dataset conversion is needed for pi0-family models
+        if args.vla_model in ["pi0", "pi0fast", "diffusion", "act"]:
+            if check_pi0_conversion_needed(args.data_dir):
+                print("🔄 Running pi0 dataset conversion for pi0-family models...")
+                conversion_success = run_pi0_dataset_conversion(args.data_dir)
+                if not conversion_success:
+                    print("Some dataset conversions failed. Check the summary above.")
+                    sys.exit(1)
+                print("✅ Dataset conversion completed successfully!\n")
+            else:
+                print("✅ Pi0 dataset conversion not needed - all combinations already converted!\n")
+        
         # Run single training (always use SLURM)
         success = run_training(args.vla_model, args.data_dir, args.state_mode, args.action_mode, use_sbatch=True, video_mode=args.video_mode)
         if success:
