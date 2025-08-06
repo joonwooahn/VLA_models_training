@@ -35,10 +35,18 @@ def detect_robot_type(data_dir):
 
 def detect_sim_or_real(data_dir):
     """Detect sim or real from data directory path"""
-    if "sim" in str(data_dir).lower():
+    data_dir_str = str(data_dir).lower()
+    
+    # If "sim" is explicitly in the path, it's simulation
+    if "sim" in data_dir_str:
         return "sim"
-    else:
+    # If "real" is explicitly in the path, it's real
+    elif "real" in data_dir_str:
         return "real"
+    # For allex robot, if neither "sim" nor "real" is in the path, default to "sim"
+    # (since allex_sim datasets don't include "sim" in the path)
+    else:
+        return "sim"
 
 def get_action_modes_for_robot(robot_type):
     """Get supported action modes for the robot type"""
