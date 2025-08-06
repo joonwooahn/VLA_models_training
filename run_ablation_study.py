@@ -67,7 +67,23 @@ def load_modality_config(robot_type="allex"):
     if robot_type == "franka":
         modality_path = Path(__file__).parent / "modality_franka.json"
     else:
-        modality_path = Path(__file__).parent / "modality.json"
+        # For allex robot, try to find the appropriate modality file
+        base_path = Path(__file__).parent
+        possible_files = [
+            "modality.json",
+            "modality_allex_real.json", 
+            "modality_allex_sim.json"
+        ]
+        
+        modality_path = None
+        for filename in possible_files:
+            file_path = base_path / filename
+            if file_path.exists():
+                modality_path = file_path
+                break
+        
+        if modality_path is None:
+            raise FileNotFoundError(f"No modality configuration file found for allex robot. Tried: {possible_files}")
     
     with open(modality_path, 'r') as f:
         return json.load(f)
