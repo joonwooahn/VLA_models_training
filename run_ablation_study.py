@@ -363,17 +363,48 @@ def check_pi0_conversion_needed(data_dir):
     # Extract task name from data_dir
     task_name = Path(data_dir).name
     
+    def get_short_name(state_mode, action_mode, video_mode):
+        """Get abbreviated combination name (same as in create_pi0_dataset.py)"""
+        # State mode abbreviation
+        state_map = {
+            "pos_only": "P",
+            "pos_vel": "PV", 
+            "pos_vel_torq": "PVT"
+        }
+        
+        # Action mode abbreviation
+        action_map = {
+            "right_arm": "R",
+            "dual_arm": "D"
+        }
+        
+        # Video mode abbreviation
+        video_map = {
+            "robotview": "R",
+            "multiview": "M"
+        }
+        
+        return f"{state_map[state_mode]}_{action_map[action_mode]}_{video_map[video_mode]}"
+    
     # Check if any combination needs conversion
     for state_mode in STATE_MODES:
         for action_mode in action_modes:
             for video_mode in VIDEO_MODES:
                 # Check if converted dataset exists for this combination
-                converted_dir = Path(__file__).parent / "pi0" / "converted_datasets" / f"{task_name}_{state_mode}_{action_mode}_{video_mode}"
+                # Converted datasets are stored in RLWRLD/pi0/{task_name}/{combination_name}/
+                converted_dir = Path("/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/pi0") / task_name
                 if not converted_dir.exists():
-                    return True  # At least one combination needs conversion
+                    return True  # Task directory doesn't exist, needs conversion
+                
+                # Check if the specific combination exists
+                # Combination name format: abbreviated (e.g., pos_vel_right_arm_robotview -> PV_R_R)
+                combination_name = get_short_name(state_mode, action_mode, video_mode)
+                combination_dir = converted_dir / combination_name
+                if not combination_dir.exists():
+                    return True  # This combination needs conversion
                 
                 # Check if the converted dataset has required files
-                info_file = converted_dir / "info.json"
+                info_file = combination_dir / "meta" / "info.json"
                 if not info_file.exists():
                     return True  # Conversion incomplete
     
