@@ -23,8 +23,11 @@ MULTI_GPU_MODELS = ["univla"]  # Models that use multiple GPUs
 
 STATE_MODES = ["pos_only", "pos_vel"]   # ["pos_only", "pos_vel", "pos_vel_torq"]
 ACTION_MODES = ["right_arm", "dual_arm"]
-ACTION_MODES_FRANKA = ["right_arm"]  # franka only supports right_arm
 VIDEO_MODES = ["robotview", "multiview"]
+ACTION_MODES_FRANKA = ["right_arm"]  # franka only supports right_arm
+
+ACTION_MODES_ALLEX_REAL = ["right_arm"]  # allex only supports right_arm
+VIDEO_MODES_ALLEX_REAL = ["robotview"]
 
 def detect_robot_type(data_dir):
     """Detect robot type from data directory path"""
@@ -48,12 +51,31 @@ def detect_sim_or_real(data_dir):
     else:
         return "sim"
 
-def get_action_modes_for_robot(robot_type):
+def get_action_modes_for_robot(robot_type, data_dir=None):
     """Get supported action modes for the robot type"""
     if robot_type == "franka":
         return ACTION_MODES_FRANKA
+    elif robot_type == "allex":
+        # Check if it's allex real robot
+        if data_dir and detect_sim_or_real(data_dir) == "real":
+            return ACTION_MODES_ALLEX_REAL
+        else:
+            return ACTION_MODES
     else:
         return ACTION_MODES
+
+def get_video_modes_for_robot(robot_type, data_dir=None):
+    """Get supported video modes for the robot type"""
+    if robot_type == "franka":
+        return VIDEO_MODES
+    elif robot_type == "allex":
+        # Check if it's allex real robot
+        if data_dir and detect_sim_or_real(data_dir) == "real":
+            return VIDEO_MODES_ALLEX_REAL
+        else:
+            return VIDEO_MODES
+    else:
+        return VIDEO_MODES
 
 def is_video_supported_model(vla_model):
     """Check if the model supports video modes"""
@@ -87,15 +109,16 @@ def load_modality_config(robot_type="allex", data_dir=None):
         if data_dir:
             sim_or_real = detect_sim_or_real(data_dir)
             if sim_or_real == "real":
-                candidate_files = ["modality_allex_real.json", "modality.json"]
+                candidate_files = ["modality_allex_real.json"]
             else:
-                candidate_files = ["modality_allex_sim.json", "modality.json"]
+                # For allex sim robots (including tasks without "allex_real" or "franka" in name)
+                candidate_files = ["modality_allex_sim.json"]
         else:
             # If data_dir is None, try both files in preferred order
-            candidate_files = ["modality_allex_real.json", "modality_allex_sim.json", "modality.json"]
+            candidate_files = ["modality_allex_real.json", "modality_allex_sim.json"]
     else:
-        # Fallback for unknown robot types
-        candidate_files = ["modality.json"]
+        # Fallback for unknown robot types - try allex_sim as default
+        candidate_files = ["modality_allex_sim.json"]
     
     # Try to find the first existing file
     for filename in candidate_files:
@@ -103,6 +126,7 @@ def load_modality_config(robot_type="allex", data_dir=None):
         if modality_path.exists():
             with open(modality_path, 'r') as f:
                 return json.load(f)
+    print(f"candidate_files: {candidate_files}")
     
     # If no file found, raise an error
     raise FileNotFoundError(f"No modality configuration file found for {robot_type} robot. Tried: {candidate_files}")
@@ -358,7 +382,7 @@ def check_pi0_conversion_needed(data_dir):
     """Check if pi0 dataset conversion is needed for any combination"""
     # Detect robot type from data_dir
     robot_type = detect_robot_type(data_dir)
-    action_modes = get_action_modes_for_robot(robot_type)
+    action_modes = get_action_modes_for_robot(robot_type, data_dir)
     
     # Extract task name from data_dir
     task_name = Path(data_dir).name
@@ -389,7 +413,7 @@ def check_pi0_conversion_needed(data_dir):
     # Check if any combination needs conversion
     for state_mode in STATE_MODES:
         for action_mode in action_modes:
-            for video_mode in VIDEO_MODES:
+            for video_mode in get_video_modes_for_robot(robot_type, data_dir):
                 # Check if converted dataset exists for this combination
                 # Converted datasets are stored in RLWRLD/pi0/{task_name}/{combination_name}/
                 converted_dir = Path("/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/pi0") / task_name
@@ -415,9 +439,11 @@ def run_pi0_dataset_conversion(data_dir):
     
     # Detect robot type from data_dir
     robot_type = detect_robot_type(data_dir)
-    action_modes = get_action_modes_for_robot(robot_type)
+    action_modes = get_action_modes_for_robot(robot_type, data_dir)
     
-    total_combinations = len(STATE_MODES) * len(action_modes) * len(VIDEO_MODES)
+    # Get video modes for this robot
+    video_modes = get_video_modes_for_robot(robot_type, data_dir)
+    total_combinations = len(STATE_MODES) * len(action_modes) * len(video_modes)
     current_combination = 0
     
     print(f"Converting pi0/diffusion/act datasets for {robot_type} robot with {total_combinations} combinations")
@@ -432,7 +458,7 @@ def run_pi0_dataset_conversion(data_dir):
     
     for state_mode in STATE_MODES:
         for action_mode in action_modes:
-            for video_mode in VIDEO_MODES:
+            for video_mode in video_modes:
                 current_combination += 1
                 print(f"[{current_combination}/{total_combinations}] {state_mode} + {action_mode} + {video_mode}: ", end="")
                 
@@ -475,7 +501,7 @@ def run_all_combinations(vla_model, data_dir):
     
     # Detect robot type from data_dir
     robot_type = detect_robot_type(data_dir)
-    action_modes = get_action_modes_for_robot(robot_type)
+    action_modes = get_action_modes_for_robot(robot_type, data_dir)
     
     # Load modality configuration once for indices calculation
     modality_config = load_modality_config(robot_type, data_dir)
@@ -498,7 +524,7 @@ def run_all_combinations(vla_model, data_dir):
     
     # video_modes는 pi0, pi0fast, gr00t, diffusion, act에만 적용
     if is_video_supported_model(vla_model):
-        video_modes = VIDEO_MODES
+        video_modes = get_video_modes_for_robot(robot_type, data_dir)
         total_combinations = len(STATE_MODES) * len(action_modes) * len(video_modes)
         print(f"Running {total_combinations} combinations (SLURM mode) with video modes for {robot_type} robot")
     else:
@@ -682,12 +708,12 @@ def main():
                     #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder_reduced_hand_10",
                     ##### new dataset
                     #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/gesture",
-                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube",
+                       default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube",
                     #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder",
                     ### franka dataset
                     #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/franka_lift_cylinder",
                     ### real allex dataset
-                        default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_real_lift_bottle",
+                        # default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/_allex_real_lift_bottle",
                     ###
                        help="Path to input data directory")
     parser.add_argument("--state_mode", type=str, required=False,

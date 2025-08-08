@@ -289,38 +289,28 @@ class LeRobotSingleDataset(Dataset):
         #     modality_meta_path.exists()
         # ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
         if not modality_meta_path.exists():
+            modality_meta_path = None
             # If not found in dataset path, try to find appropriate modality file from VLA_models_training
             vla_models_training_path = Path("/virtual_lab/rlwrld/david/VLA_models_training")
             
             # Detect robot type and sim/real from dataset path
+            print(f"self.dataset_path: {self.dataset_path}")
             dataset_path_str = str(self.dataset_path).lower()
             if "franka" in dataset_path_str:
-                robot_type = "franka"
-            else:
-                robot_type = "allex"
-            
-            if robot_type == "franka":
-                candidate_files = ["modality_franka.json"]
+                modality_meta_path = vla_models_training_path / "modality_franka.json"
             else:  # allex
-                if "sim" in dataset_path_str:
-                    candidate_files = ["modality_allex_sim.json", "modality.json"]
+                if "real" in dataset_path_str:
+                    modality_meta_path = vla_models_training_path / "modality_allex_real.json"
                 else:
-                    candidate_files = ["modality_allex_real.json", "modality.json"]
+                    modality_meta_path = vla_models_training_path / "modality_allex_sim.json"
+            print(f"modality_meta_path: {modality_meta_path}")
             
-            # Try to find the appropriate modality file
-            found_modality_path = None
-            for filename in candidate_files:
-                candidate_path = vla_models_training_path / filename
-                if candidate_path.exists():
-                    found_modality_path = candidate_path
-                    break
-            
-            if found_modality_path:
-                modality_meta_path = found_modality_path
-            else:
+            if modality_meta_path is None:
                 assert (
                     modality_meta_path.exists()
-                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure appropriate modality file exists in {vla_models_training_path}. Tried: {candidate_files}"
+                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure appropriate modality file exists in {vla_models_training_path}. Tried: {modality_meta_path}"
+            else:
+                print(f"modality_meta_path: {modality_meta_path}")
 
         # 1.1. State and action modalities
         simplified_modality_meta: dict[str, dict] = {}
@@ -488,10 +478,13 @@ class LeRobotSingleDataset(Dataset):
             if robot_type == "franka":
                 candidate_files = ["modality_franka.json"]
             else:  # allex
-                if "sim" in dataset_path_str:
-                    candidate_files = ["modality_allex_sim.json", "modality.json"]
+                # Detect sim or real from dataset path
+                if "real" in dataset_path_str:
+                    candidate_files = ["modality_allex_real.json"]
                 else:
-                    candidate_files = ["modality_allex_real.json", "modality.json"]
+                    # For allex sim robots (including tasks without "allex_real" or "franka" in name)
+                    candidate_files = ["modality_allex_sim.json"]
+            print(f"candidate_files: {candidate_files}")
             
             # Try to find the appropriate modality file
             found_modality_path = None
@@ -499,8 +492,8 @@ class LeRobotSingleDataset(Dataset):
                 candidate_path = vla_models_training_path / filename
                 if candidate_path.exists():
                     found_modality_path = candidate_path
-                    break
-            
+                    break    
+        
             if found_modality_path:
                 modality_meta_path = found_modality_path
             else:
@@ -860,20 +853,7 @@ class LeRobotSingleDataset(Dataset):
         if original_key is None:
             original_key = key
         for i in range(len(step_indices)):
-            value = self.curr_traj_data[original_key][step_indices[i]]
-            # Handle both numeric and string values
-            if hasattr(value, 'item'):
-                task_indices.append(value.item())
-            else:
-                # If it's a string, try to convert to int for task_index
-                if original_key == "task_index":
-                    try:
-                        task_indices.append(int(value))
-                    except (ValueError, TypeError):
-                        # If conversion fails, use the string as is
-                        task_indices.append(value)
-                else:
-                    task_indices.append(value)
+            task_indices.append(self.curr_traj_data[original_key][step_indices[i]].item())
         return self.tasks.loc[task_indices]["task"].tolist()
 
     def get_data_by_modality(

@@ -142,6 +142,7 @@ def main(config: ArgsConfig):
     # 1.1 modality configs and transforms
     data_config_cls = DATA_CONFIG_MAP[config.data_config]
     modality_configs = data_config_cls.modality_config()
+    print(f"modality_configs: {modality_configs}")
     transforms = data_config_cls.transform()
 
     # 1.2 data loader: we will use either single dataset or mixture dataset

@@ -1561,7 +1561,7 @@ class franka_pos_vel_right_arm_multiview_config(BaseDataConfig):
 
 ###########################################################################################
 class allex_real_pos_only_right_arm_robotview_config(BaseDataConfig):
-    video_keys = ["video.camera_ego"]
+    video_keys = ["video.camera_agentview"]
     state_keys = [
         "state.right_arm_joints",
         "state.right_hand_joints",
@@ -1570,7 +1570,7 @@ class allex_real_pos_only_right_arm_robotview_config(BaseDataConfig):
         "action.right_arm_eef_pos",
         "action.right_finger_joints",
     ]
-    language_keys = ["annotation.language_instruction"]
+    language_keys = ["annotation.human.task_description"]
     observation_indices = [0]
     action_indices = list(range(16))
 
@@ -1647,10 +1647,9 @@ class allex_real_pos_only_right_arm_robotview_config(BaseDataConfig):
         return ComposedModalityTransform(transforms=transforms)
 ###########################################################################################
 
-
 ###########################################################################################
 class allex_real_pos_vel_right_arm_robotview_config(BaseDataConfig):
-    video_keys = ["video.camera_ego"]
+    video_keys = ["video.camera_agentview"]
     state_keys = [
         "state.right_arm_joints",
         "state.right_hand_joints",
@@ -1661,7 +1660,7 @@ class allex_real_pos_vel_right_arm_robotview_config(BaseDataConfig):
         "action.right_arm_eef_pos",
         "action.right_finger_joints",
     ]
-    language_keys = ["annotation.language_instruction"]
+    language_keys = ["annotation.human.task_description"]
     observation_indices = [0]
     action_indices = list(range(16))
 

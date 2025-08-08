@@ -31,10 +31,11 @@ def transform_state_action(df, state_indices, action_indices, video_mode="robotv
         additional_cameras = []
         
         # 로봇 타입에 따른 메인 카메라 키 결정
-        if robot_type == "franka" or robot_type == "allex_real":
+        if robot_type == "franka":
             main_camera_key = "observation.images.agentview"
         else:
-            main_camera_key = "observation.images.robot0_robotview"
+            # allex 로봇의 경우 항상 agentview 사용
+            main_camera_key = "observation.images.agentview"
         
         # 메인 카메라를 제외한 모든 이미지 컬럼 찾기
         for col in df.columns:
@@ -95,10 +96,11 @@ def generate_episodes_stats(data_dir, meta_dir, source_meta_dir, video_mode="rob
             }
             
             # 로봇 타입에 따른 메인 카메라 키 결정
-            if robot_type == "franka" or robot_type == "allex_real":
+            if robot_type == "franka":
                 main_camera_key = "observation.images.agentview"
             else:
-                main_camera_key = "observation.images.robot0_robotview"
+                # allex 로봇의 경우 항상 agentview 사용
+                main_camera_key = "observation.images.agentview"
             
             # observation.images (원본에서 복사됨)
             if main_camera_key in df.columns:
@@ -233,10 +235,17 @@ def generate_episodes_stats(data_dir, meta_dir, source_meta_dir, video_mode="rob
             # 이미지 필드는 원본에서 그대로 복사
             if "stats" in original_stat:
                 # 로봇 타입에 따른 메인 카메라 키 결정
-                if robot_type == "franka" or robot_type == "allex_real":
+                if robot_type == "franka":
                     main_camera_key = "observation.images.agentview"
                 else:
-                    main_camera_key = "observation.images.robot0_robotview"
+                    # allex 로봇의 경우 둘 중 하나라도 있으면 사용
+                    if "observation.images.robot0_robotview" in original_stat["stats"]:
+                        main_camera_key = "observation.images.robot0_robotview"
+                    elif "observation.images.agentview" in original_stat["stats"]:
+                        main_camera_key = "observation.images.agentview"
+                    else:
+                        # 둘 다 없으면 기본값으로 agentview 사용
+                        main_camera_key = "observation.images.agentview"
                 
                 # 메인 카메라는 항상 복사
                 if main_camera_key in original_stat["stats"]:
@@ -342,15 +351,15 @@ def main():
         shutil.rmtree(target_data_dir)
     target_data_dir.mkdir(parents=True, exist_ok=True)
     
-    # 로봇 타입 감지
+    # 로봇 타입 감지 (allex_real이 포함된 task_name도 고려)
     if "franka" in args.source_dir.lower():
         robot_type = "franka"
-    elif "allex_real" in args.source_dir.lower():
-        robot_type = "allex_real"
+    elif "allex_real" in args.task_name.lower() or "allex_real" in args.source_dir.lower():
+        robot_type = "allex"
+        logger.info(f"Detected allex real robot from task_name: {args.task_name}")
     else:
         robot_type = "allex"
     logger.info(f"Detected robot type: {robot_type}")
-    
     
     # 1. 데이터 변환
     logger.info("데이터 변환 시작...")
@@ -387,7 +396,7 @@ def main():
                 additional_cameras = []
                 
                 # 로봇 타입에 따른 메인 카메라 키 결정
-                if robot_type == "franka" or robot_type == "allex_real":
+                if robot_type == "franka":
                     main_camera_key = "observation.images.agentview"
                 else:
                     main_camera_key = "observation.images.robot0_robotview"
@@ -443,18 +452,114 @@ def main():
                 else:
                     logger.warning(f"Original action names length ({len(original_names)}) is less than expected")
             
-            # video_path 수정
+            # video_path 수정 및 비디오 features 추가
             if "video_path" in info_data:
                 if args.video_mode == "robotview":
                     # 로봇 타입에 따른 메인 카메라 키 결정
-                    if robot_type == "franka" or robot_type == "allex_real":
+                    if robot_type == "franka":
                         main_camera_key = "observation.images.agentview"
                     else:
-                        main_camera_key = "observation.images.robot0_robotview"
+                        # allex 로봇의 경우 항상 agentview 사용
+                        main_camera_key = "observation.images.agentview"
                     
-                    info_data["video_path"] = f"videos/chunk-{{episode_chunk:03d}}/{main_camera_key}/episode_{{episode_index:06d}}.mp4"
-                    logger.info(f"Updated video_path to use only {main_camera_key}")
-                # multiview인 경우 기존 video_path 유지 (원본 그대로)
+                    # video_path를 {video_key} 변수를 사용하도록 수정
+                    info_data["video_path"] = "videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4"
+                    logger.info(f"Updated video_path to use video_key variable")
+                    
+                    # 비디오 features 추가 (올바른 구조)
+                    if "features" not in info_data:
+                        info_data["features"] = {}
+                    
+                    info_data["features"][main_camera_key] = {
+                        "dtype": "video",
+                        "shape": [224, 224, 3],
+                        "description": f"Camera view from {main_camera_key.split('.')[-1]}",
+                        "names": ["height", "width", "channel"],
+                        "video_info": {
+                            "fps": info_data.get("fps", 20),
+                            "codec": "av1",
+                            "pix_fmt": "yuv420p",
+                            "is_depth_map": False,
+                            "has_audio": False
+                        },
+                        "info": {
+                            "video.fps": float(info_data.get("fps", 20)),
+                            "video.height": 224,
+                            "video.width": 224,
+                            "video.channels": 3,
+                            "video.codec": "hevc",
+                            "video.pix_fmt": "yuv420p",
+                            "video.is_depth_map": False,
+                            "has_audio": False
+                        }
+                    }
+                    logger.info(f"Added {main_camera_key} video feature to info.json")
+                    
+                elif args.video_mode == "multiview":
+                    # multiview인 경우: 모든 카메라 features 추가
+                    info_data["video_path"] = "videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4"
+                    
+                    # 메인 카메라 추가
+                    if robot_type == "franka":
+                        main_camera_key = "observation.images.agentview"
+                    else:
+                        main_camera_key = "observation.images.agentview"
+                    
+                    if "features" not in info_data:
+                        info_data["features"] = {}
+                    
+                    # 메인 카메라 feature 추가
+                    info_data["features"][main_camera_key] = {
+                        "dtype": "video",
+                        "shape": [224, 224, 3],
+                        "description": f"Camera view from {main_camera_key.split('.')[-1]}",
+                        "names": ["height", "width", "channel"],
+                        "video_info": {
+                            "fps": info_data.get("fps", 20),
+                            "codec": "av1",
+                            "pix_fmt": "yuv420p",
+                            "is_depth_map": False,
+                            "has_audio": False
+                        },
+                        "info": {
+                            "video.fps": float(info_data.get("fps", 20)),
+                            "video.height": 224,
+                            "video.width": 224,
+                            "video.channels": 3,
+                            "video.codec": "hevc",
+                            "video.pix_fmt": "yuv420p",
+                            "video.is_depth_map": False,
+                            "has_audio": False
+                        }
+                    }
+                    
+                    # sideview 카메라 feature 추가 (franka multiview용)
+                    if robot_type == "franka":
+                        info_data["features"]["observation.images.sideview"] = {
+                            "dtype": "video",
+                            "shape": [224, 224, 3],
+                            "description": "Camera view from sideview",
+                            "names": ["height", "width", "channel"],
+                            "video_info": {
+                                "fps": info_data.get("fps", 20),
+                                "codec": "av1",
+                                "pix_fmt": "yuv420p",
+                                "is_depth_map": False,
+                                "has_audio": False
+                            },
+                            "info": {
+                                "video.fps": float(info_data.get("fps", 20)),
+                                "video.height": 224,
+                                "video.width": 224,
+                                "video.channels": 3,
+                                "video.codec": "hevc",
+                                "video.pix_fmt": "yuv420p",
+                                "video.is_depth_map": False,
+                                "has_audio": False
+                            }
+                        }
+                    
+                    logger.info(f"Added multiview camera features to info.json")
             
             # 수정된 info.json 저장
             with open(info_file, 'w') as f:
@@ -473,10 +578,11 @@ def main():
         
         if args.video_mode == "robotview":
             # 로봇 타입에 따른 메인 카메라 키 결정
-            if robot_type == "franka" or robot_type == "allex_real":
+            if robot_type == "franka":
                 main_camera_key = "observation.images.agentview"
             else:
-                main_camera_key = "observation.images.robot0_robotview"
+                # allex 로봇의 경우 항상 agentview 사용
+                main_camera_key = "observation.images.agentview"
             
             logger.info(f"{main_camera_key} 비디오만 복사 중...")
             # chunk-000/observation.images.{main_camera_key} 폴더만 복사
