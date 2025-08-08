@@ -53,9 +53,12 @@ fi
 # Data config 생성
 if [ "$ROBOT_TYPE" = "franka" ]; then
     DATA_CONFIG="franka_${STATE_MODE}_${ACTION_MODE}_${VIDEO_MODE}"
-else
-    # Allex robot: include sim/real information
+elif [ "$ROBOT_TYPE" = "allex" ] && [ "$SIM_OR_REAL" = "real" ]; then
+    # Allex real robot: include real information
     DATA_CONFIG="${ROBOT_TYPE}_${SIM_OR_REAL}_${STATE_MODE}_${ACTION_MODE}_${VIDEO_MODE}"
+else
+    # Allex sim robot or other cases: use original format
+    DATA_CONFIG="${STATE_MODE}_${ACTION_MODE}_${VIDEO_MODE}"
 fi
 
 echo "ROBOT_TYPE: $ROBOT_TYPE"
@@ -64,9 +67,6 @@ echo "DATA_CONFIG: $DATA_CONFIG"
 echo "ACTION_DIM: $ACTION_DIM"
 echo "MAX_STEPS: $MAX_STEPS"
 echo "SAVE_STEPS: $SAVE_STEPS"
-
-# ACTION_DIM=12    # for lift_cylinder_reduced_hand
-# ACTION_DIM=10    # for lift_cylinder_reduced_hand_10
 
 # Checkpoint 저장 경로 설정
 OUTPUT_DIR="/virtual_lab/rlwrld/david/VLA_models_training/_checkpoints/gr00t/${CHECKPOINT_NAME}"
@@ -78,8 +78,8 @@ if [ "$ROBOT_TYPE" = "franka" ]; then
     SAVE_STEPS=3000
 else
     # Allex robot: original settings
-    MAX_STEPS=16000
-    SAVE_STEPS=2000
+    MAX_STEPS=10000
+    SAVE_STEPS=5000
 fi
 
 python scripts/gr00t_finetune.py \

@@ -171,7 +171,7 @@ if [ "$VLA_MODEL" = "diffusion" ]; then
     python3 lerobot/scripts/train.py \
         --job_name "$JOB_NAME" \
         --steps=50000 \
-        --save_freq=10000 \
+        --save_freq=50000 \
         --batch_size="$BATCH_SIZE" \
         --output_dir "$OUTPUT_DIR" \
         --policy.type=diffusion \
@@ -182,7 +182,7 @@ elif [ "$VLA_MODEL" = "act" ]; then
     python3 lerobot/scripts/train.py \
         --job_name "$JOB_NAME" \
         --steps=50000 \
-        --save_freq=10000 \
+        --save_freq=50000 \
         --batch_size="$BATCH_SIZE" \
         --output_dir "$OUTPUT_DIR" \
         --policy.type=act \
@@ -192,8 +192,8 @@ elif [ "$VLA_MODEL" = "act" ]; then
 else
     python3 lerobot/scripts/train.py \
         --job_name "$JOB_NAME" \
-        --steps=30000 \
-        --save_freq=10000 \
+        --steps=1000 \
+        --save_freq=1000 \
         --batch_size="$BATCH_SIZE" \
         --output_dir "$OUTPUT_DIR" \
         --policy.path="$POLICY_PATH" \
