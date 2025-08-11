@@ -1,5 +1,89 @@
 # VLA_models_training
 
+## Ablation Runner 소개 (`run_ablation_study.py`)
+VLA 계열 모델들에 대해 상태(state)/액션(action)/비디오(video) 조합을 자동으로 생성하고, SLURM 잡으로 일괄 학습을 제출하는 러너입니다. 모델별로 필요한 인덱스를 자동 계산하고, 체크포인트/로그 경로도 통일된 규칙으로 관리합니다.
+
+- 지원 모델: `gr00t`, `pi0`, `pi0fast`, `univla`, `diffusion`, `act`
+- 비디오 모드 지원: `gr00t`, `pi0`, `pi0fast`, `diffusion`, `act`는 `robotview | multiview`를 사용. `univla`는 내부적으로 `robotview` 고정
+- 상태 모드: `pos_only | pos_vel`
+- 액션 모드: `right_arm | dual_arm` (단, 로봇/데이터셋 타입에 따라 제한됨)
+- 자동 감지:
+  - 로봇: 데이터 경로에 `franka`가 포함되면 `franka`, 그렇지 않으면 `allex`
+  - 시뮬/리얼: 경로에 `sim`이 있으면 `sim`, `real`이 있으면 `real`, 둘 다 없으면 기본 `sim` (allex sim 데이터는 관례상 경로에 `sim`이 빠짐)
+
+### 산출물 경로 규칙
+- 체크포인트: `_checkpoints/<모델>/<태스크>/<state>_<action>_<video(또는 robotview)>/`
+- 로그: `_logs/<모델>/<태스크>/slurm-<JOBID>-<JOBNAME>.log`
+  - `JOBNAME`에는 조합 정보가 들어갑니다. 로그 디렉토리 구조는 모델/태스크 기준으로 고정됩니다.
+
+## 빠른 시작
+
+### 1) 모든 모델 일괄 실행 (모든 조합)
+```bash
+python run_ablation_study.py \
+  --run_mode_all \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube
+```
+- `pi0`/`pi0fast`/`diffusion`/`act` 계열은 필요한 경우 데이터셋 변환을 먼저 수행한 뒤 학습을 제출합니다.
+
+### 2) 특정 모델만 모든 조합 실행
+- `univla` 예시:
+```bash
+python run_ablation_study.py \
+  --run_mode_all \
+  --vla_model univla \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube
+```
+- `pi0` 예시(비디오 모드 자동 포함):
+```bash
+python run_ablation_study.py \
+  --run_mode_all \
+  --vla_model pi0 \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube
+```
+
+### 3) 단일 조합 실행
+```bash
+python run_ablation_study.py \
+  --vla_model gr00t \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube \
+  --state_mode pos_vel \
+  --action_mode right_arm \
+  --video_mode multiview
+```
+- `univla`는 `--video_mode`가 필요 없습니다.
+
+### 4) (선택) pi0 계열 데이터셋 변환만 먼저 수행
+```bash
+python run_ablation_study.py \
+  --pi0_dataset_convert \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube
+```
+
+## 명령행 인자 요약
+- **--vla_model**: 사용할 모델 이름. `gr00t | pi0 | pi0fast | univla | diffusion | act`
+- **--data_dir**: 원본 데이터 경로. 로봇/시뮬 여부 자동 감지에 사용
+- **--state_mode**: `pos_only | pos_vel`
+- **--action_mode**: `right_arm | dual_arm` (로봇/데이터셋에 따라 제한)
+- **--video_mode**: `robotview | multiview` (비디오 모드 지원 모델에만 해당)
+- **--run_mode_all**: 지정된 모델(또는 전체 모델)에 대해 가능한 모든 조합을 SLURM으로 제출
+- **--pi0_dataset_convert**: `pi0`/`pi0fast`/`diffusion`/`act` 변환을 모든 조합으로 선행 실행
+
+## 모니터링과 결과 확인
+- 제출 후 잡 개수/상태 확인: `squeue -u $USER`
+- 로그: `_logs/<모델>/<태스크>/slurm-<JOBID>-<JOBNAME>.log`
+- 체크포인트: `_checkpoints/<모델>/<태스크>/<조합명>/`
+
+## 주의 사항
+- `allex` 실데이터(`real`)는 제약: `action_mode=right_arm`, `video_mode=robotview`만 허용
+- `franka`는 단일 팔 로봇: `action_mode=right_arm`만 허용
+- GPU 사용 수: `univla=2`, 그 외 단일 GPU. SLURM 파티션/자원 정책에 맞추어 제출됩니다.
+
+---
+
+## 개별 모델 훈련 가이드 (세부)
+아래 내용은 각 모델을 단독으로 설정/훈련/추론하는 방법입니다. Ablation Runner로 일괄 학습을 돌리지 않고, 수동으로 진행해야 할 때 참고하세요.
+
 ## 추론을 위한 omni-pilot 환경 설정
 ### uv 설치
 ```sh
