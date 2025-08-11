@@ -18,6 +18,12 @@ VLA 계열 모델들에 대해 상태(state)/액션(action)/비디오(video) 조
 
 ## 빠른 시작
 
+### 데이터 경로 요구사항(중요)
+- 본 러너는 LeRobot 라이브러리 호환 구조를 가정합니다. `--data_dir`는 반드시 사용자의 홈 디렉토리 하위에 있는 다음 경로 컨벤션을 따라야 합니다.
+  - `~/.cache/huggingface/lerobot/RLWRLD/<태스크명>`
+  - 본 문서에서는 절대경로 예시를 사용합니다: `/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/<태스크명>`
+  - 내부 구조 예시(LeRobot v2 기준): `<data_dir>/data/chunk-000/episode_*.parquet`, `<data_dir>/meta/modality.json` 등
+
 ### 1) 모든 모델 일괄 실행 (모든 조합)
 ```bash
 python run_ablation_study.py \
@@ -53,11 +59,64 @@ python run_ablation_study.py \
 ```
 - `univla`는 `--video_mode`가 필요 없습니다.
 
-### 4) (선택) pi0 계열 데이터셋 변환만 먼저 수행
+### 실행 예시 모음(모델/로봇/데이터셋별)
+
+- allex 시뮬 데이터로 모든 모델 전체 조합 실행
+```bash
+python run_ablation_study.py --run_mode_all \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube
+```
+
+- allex 실데이터(real)로 pi0 전체 조합 실행(제약: right_arm + robotview)
+```bash
+python run_ablation_study.py --run_mode_all --vla_model pi0 \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/_allex_real_lift_bottle
+```
+
+- franka 데이터로 gr00t 단일 조합 실행(pos_only + right_arm + multiview)
 ```bash
 python run_ablation_study.py \
-  --pi0_dataset_convert \
+  --vla_model gr00t \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/franka_lift_cylinder \
+  --state_mode pos_only \
+  --action_mode right_arm \
+  --video_mode multiview
+```
+
+- allex 시뮬 데이터로 diffusion 단일 조합 실행(pos_vel + dual_arm + robotview)
+```bash
+python run_ablation_study.py \
+  --vla_model diffusion \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube \
+  --state_mode pos_vel \
+  --action_mode dual_arm \
+  --video_mode robotview
+```
+
+- allex 시뮬 데이터로 pi0fast 단일 조합 실행(pos_vel + right_arm + multiview)
+```bash
+python run_ablation_study.py \
+  --vla_model pi0fast \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube \
+  --state_mode pos_vel \
+  --action_mode right_arm \
+  --video_mode multiview
+```
+
+- univla 모든 조합 실행(비디오 모드 미지정, 내부 robotview 고정)
+```bash
+python run_ablation_study.py --run_mode_all --vla_model univla \
   --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube
+```
+
+- franka 데이터로 act 단일 조합 실행(pos_only + right_arm + robotview)
+```bash
+python run_ablation_study.py \
+  --vla_model act \
+  --data_dir /virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/franka_lift_cylinder \
+  --state_mode pos_only \
+  --action_mode right_arm \
+  --video_mode robotview
 ```
 
 ## 명령행 인자 요약
