@@ -289,14 +289,28 @@ class LeRobotSingleDataset(Dataset):
         #     modality_meta_path.exists()
         # ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
         if not modality_meta_path.exists():
-            # If not found in dataset path, try to use the global modality.json from VLA_models_training
-            global_modality_path = Path("/virtual_lab/rlwrld/david/VLA_models_training/modality.json")
-            if global_modality_path.exists():
-                modality_meta_path = global_modality_path
-            else:
+            modality_meta_path = None
+            # If not found in dataset path, try to find appropriate modality file from VLA_models_training
+            vla_models_training_path = Path("/virtual_lab/rlwrld/david/VLA_models_training")
+            
+            # Detect robot type and sim/real from dataset path
+            print(f"self.dataset_path: {self.dataset_path}")
+            dataset_path_str = str(self.dataset_path).lower()
+            if "franka" in dataset_path_str:
+                modality_meta_path = vla_models_training_path / "modality_franka.json"
+            else:  # allex
+                if "real" in dataset_path_str:
+                    modality_meta_path = vla_models_training_path / "modality_allex_real.json"
+                else:
+                    modality_meta_path = vla_models_training_path / "modality_allex_sim.json"
+            print(f"modality_meta_path: {modality_meta_path}")
+            
+            if modality_meta_path is None:
                 assert (
                     modality_meta_path.exists()
-                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure /virtual_lab/rlwrld/david/VLA_models_training/modality.json exists"
+                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure appropriate modality file exists in {vla_models_training_path}. Tried: {modality_meta_path}"
+            else:
+                print(f"modality_meta_path: {modality_meta_path}")
 
         # 1.1. State and action modalities
         simplified_modality_meta: dict[str, dict] = {}
@@ -451,14 +465,41 @@ class LeRobotSingleDataset(Dataset):
         #     modality_meta_path.exists()
         # ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path}"
         if not modality_meta_path.exists():
-            # If not found in dataset path, try to use the global modality.json from VLA_models_training
-            global_modality_path = Path("/virtual_lab/rlwrld/david/VLA_models_training/modality.json")
-            if global_modality_path.exists():
-                modality_meta_path = global_modality_path
+            # If not found in dataset path, try to find appropriate modality file from VLA_models_training
+            vla_models_training_path = Path("/virtual_lab/rlwrld/david/VLA_models_training")
+            
+            # Detect robot type and sim/real from dataset path
+            dataset_path_str = str(self.dataset_path).lower()
+            if "franka" in dataset_path_str:
+                robot_type = "franka"
+            else:
+                robot_type = "allex"
+            
+            if robot_type == "franka":
+                candidate_files = ["modality_franka.json"]
+            else:  # allex
+                # Detect sim or real from dataset path
+                if "real" in dataset_path_str:
+                    candidate_files = ["modality_allex_real.json"]
+                else:
+                    # For allex sim robots (including tasks without "allex_real" or "franka" in name)
+                    candidate_files = ["modality_allex_sim.json"]
+            print(f"candidate_files: {candidate_files}")
+            
+            # Try to find the appropriate modality file
+            found_modality_path = None
+            for filename in candidate_files:
+                candidate_path = vla_models_training_path / filename
+                if candidate_path.exists():
+                    found_modality_path = candidate_path
+                    break    
+        
+            if found_modality_path:
+                modality_meta_path = found_modality_path
             else:
                 assert (
                     modality_meta_path.exists()
-                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure /virtual_lab/rlwrld/david/VLA_models_training/modality.json exists"
+                ), f"Please provide a {LE_ROBOT_MODALITY_FILENAME} file in {self.dataset_path} or ensure appropriate modality file exists in {vla_models_training_path}. Tried: {candidate_files}"
         
         with open(modality_meta_path, "r") as f:
             modality_meta = LeRobotModalityMetadata.model_validate(json.load(f))

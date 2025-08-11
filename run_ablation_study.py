@@ -16,14 +16,66 @@ import sys
 from pathlib import Path
 
 # Constants to eliminate duplication
-SUPPORTED_VLA_MODELS = ["gr00t", "pi0", "pi0fast", "univla"]
-VIDEO_SUPPORTED_MODELS = ["pi0", "pi0fast", "gr00t"]  # Models that support video modes
-SINGLE_GPU_MODELS = ["gr00t", "pi0", "pi0fast"]  # Models that use single GPU
+SUPPORTED_VLA_MODELS = ["gr00t", "pi0", "pi0fast", "univla", "diffusion", "act"]
+VIDEO_SUPPORTED_MODELS = ["gr00t", "pi0", "pi0fast", "diffusion", "act"]  # Models that support video modes
+SINGLE_GPU_MODELS = ["gr00t", "pi0", "pi0fast", "diffusion", "act"]  # Models that use single GPU
 MULTI_GPU_MODELS = ["univla"]  # Models that use multiple GPUs
 
 STATE_MODES = ["pos_only", "pos_vel"]   # ["pos_only", "pos_vel", "pos_vel_torq"]
 ACTION_MODES = ["right_arm", "dual_arm"]
 VIDEO_MODES = ["robotview", "multiview"]
+ACTION_MODES_FRANKA = ["right_arm"]  # franka only supports right_arm
+
+ACTION_MODES_ALLEX_REAL = ["right_arm"]  # allex only supports right_arm
+VIDEO_MODES_ALLEX_REAL = ["robotview"]
+
+def detect_robot_type(data_dir):
+    """Detect robot type from data directory path"""
+    if "franka" in str(data_dir).lower():
+        return "franka"
+    else:
+        return "allex"
+
+def detect_sim_or_real(data_dir):
+    """Detect sim or real from data directory path"""
+    data_dir_str = str(data_dir).lower()
+    
+    # If "sim" is explicitly in the path, it's simulation
+    if "sim" in data_dir_str:
+        return "sim"
+    # If "real" is explicitly in the path, it's real
+    elif "real" in data_dir_str:
+        return "real"
+    # For allex robot, if neither "sim" nor "real" is in the path, default to "sim"
+    # (since allex_sim datasets don't include "sim" in the path)
+    else:
+        return "sim"
+
+def get_action_modes_for_robot(robot_type, data_dir=None):
+    """Get supported action modes for the robot type"""
+    if robot_type == "franka":
+        return ACTION_MODES_FRANKA
+    elif robot_type == "allex":
+        # Check if it's allex real robot
+        if data_dir and detect_sim_or_real(data_dir) == "real":
+            return ACTION_MODES_ALLEX_REAL
+        else:
+            return ACTION_MODES
+    else:
+        return ACTION_MODES
+
+def get_video_modes_for_robot(robot_type, data_dir=None):
+    """Get supported video modes for the robot type"""
+    if robot_type == "franka":
+        return VIDEO_MODES
+    elif robot_type == "allex":
+        # Check if it's allex real robot
+        if data_dir and detect_sim_or_real(data_dir) == "real":
+            return VIDEO_MODES_ALLEX_REAL
+        else:
+            return VIDEO_MODES
+    else:
+        return VIDEO_MODES
 
 def is_video_supported_model(vla_model):
     """Check if the model supports video modes"""
@@ -35,123 +87,188 @@ def is_single_gpu_model(vla_model):
 
 def get_gpu_count(vla_model):
     """Get GPU count for the model"""
-    return 1 if is_single_gpu_model(vla_model) else 4
+    return 1 if is_single_gpu_model(vla_model) else 2
 
-def calculate_indices(modality_config, state_mode, action_mode):
+def calculate_indices(modality_config, state_mode, action_mode, robot_type="allex"):
     """Calculate state and action indices and convert to strings"""
-    state_indices = get_state_indices(modality_config, state_mode, action_mode)
-    action_indices = get_action_indices(modality_config, action_mode)
+    state_indices = get_state_indices(modality_config, state_mode, action_mode, robot_type)
+    action_indices = get_action_indices(modality_config, action_mode, robot_type)
     
     state_indices_str = ",".join(map(str, state_indices))
     action_indices_str = ",".join(map(str, action_indices))
     
     return state_indices, action_indices, state_indices_str, action_indices_str
 
-def load_modality_config():
-    """Load modality configuration from modality.json"""
-    modality_path = Path(__file__).parent / "modality.json"
-    with open(modality_path, 'r') as f:
-        return json.load(f)
+def load_modality_config(robot_type="allex", data_dir=None):
+    """Load modality configuration from appropriate modality file"""
+    base_path = Path(__file__).parent
+    
+    if robot_type == "franka":
+        candidate_files = ["modality_franka.json"]
+    elif robot_type == "allex":
+        if data_dir:
+            sim_or_real = detect_sim_or_real(data_dir)
+            if sim_or_real == "real":
+                candidate_files = ["modality_allex_real.json"]
+            else:
+                # For allex sim robots (including tasks without "allex_real" or "franka" in name)
+                candidate_files = ["modality_allex_sim.json"]
+        else:
+            # If data_dir is None, try both files in preferred order
+            candidate_files = ["modality_allex_real.json", "modality_allex_sim.json"]
+    else:
+        # Fallback for unknown robot types - try allex_sim as default
+        candidate_files = ["modality_allex_sim.json"]
+    
+    # Try to find the first existing file
+    for filename in candidate_files:
+        modality_path = base_path / filename
+        if modality_path.exists():
+            with open(modality_path, 'r') as f:
+                return json.load(f)
+    print(f"candidate_files: {candidate_files}")
+    
+    # If no file found, raise an error
+    raise FileNotFoundError(f"No modality configuration file found for {robot_type} robot. Tried: {candidate_files}")
 
-def get_state_indices(modality_config, state_mode, action_mode):
+def get_state_indices(modality_config, state_mode, action_mode, robot_type="allex"):
     """Get state indices based on state_mode and action_mode, excluding head_joints for training."""
     state_indices = []
     
-    # Base position joints (exclude head_joints)
-    base_joints = [
-        # "torso_joints", "head_joints", "right_arm_joints", 
-        "torso_joints", "right_arm_joints", 
-        "left_arm_joints", "right_hand_joints", "left_hand_joints"
-    ]
-    
-    # If action_mode is right_arm, exclude left-related joints
-    if action_mode == "right_arm":
-        base_joints = [joint for joint in base_joints if "left" not in joint]
-    
-    for joint in base_joints:
-        if joint in modality_config["state"]:
-            start = modality_config["state"][joint]["start"]
-            end = modality_config["state"][joint]["end"]
-            state_indices.extend(range(start, end))
-    
-    # Add velocity joints if pos_vel or pos_vel_torq (exclude head_joints_vel)
-    # if state_mode in ["pos_vel", "pos_vel_torq"]:
-    if state_mode in ["pos_vel"]:
-        vel_joints = [
-            # "torso_joints_vel", "head_joints_vel", "right_arm_joints_vel",
-            "torso_joints_vel", "right_arm_joints_vel",
-            "left_arm_joints_vel", "right_hand_joints_vel", "left_hand_joints_vel"
-        ]
-        # If action_mode is right_arm, exclude left-related joints
-        if action_mode == "right_arm":
-            vel_joints = [joint for joint in vel_joints if "left" not in joint]
-        for joint in vel_joints:
+    if robot_type == "franka":
+        # Franka robot joints
+        base_joints = ["arm_joints", "hand_joints"]
+        
+        for joint in base_joints:
             if joint in modality_config["state"]:
                 start = modality_config["state"][joint]["start"]
                 end = modality_config["state"][joint]["end"]
                 state_indices.extend(range(start, end))
-    
-    # # Add torque joints if pos_vel_torq (exclude head_joints_torque)
-    # if state_mode == "pos_vel_torq":
-    #     torque_joints = [
-    #         # "torso_joints_torque", "head_joints_torque", "right_arm_joints_torque",
-    #         "torso_joints_torque", "right_arm_joints_torque",
-    #         "left_arm_joints_torque", "right_hand_joints_torque", "left_hand_joints_torque"
-    #     ]
-    #     # If action_mode is right_arm, exclude left-related joints
-    #     if action_mode == "right_arm":
-    #         torque_joints = [joint for joint in torque_joints if "left" not in joint]
-    #     for joint in torque_joints:
-    #         if joint in modality_config["state"]:
-    #             start = modality_config["state"][joint]["start"]
-    #             end = modality_config["state"][joint]["end"]
-    #             state_indices.extend(range(start, end))
+        
+        # Add velocity joints if pos_vel
+        if state_mode in ["pos_vel"]:
+            vel_joints = ["arm_joint_velocities"]
+            for joint in vel_joints:
+                if joint in modality_config["state"]:
+                    start = modality_config["state"][joint]["start"]
+                    end = modality_config["state"][joint]["end"]
+                    state_indices.extend(range(start, end))
+    else:
+        # Allex robot joints (original logic)
+        # Base position joints (exclude head_joints)
+        base_joints = [
+            # "torso_joints", "head_joints", "right_arm_joints", 
+            "torso_joints", "right_arm_joints", 
+            "left_arm_joints", "right_hand_joints", "left_hand_joints"
+        ]
+        
+        # If action_mode is right_arm, exclude left-related joints
+        if action_mode == "right_arm":
+            base_joints = [joint for joint in base_joints if "left" not in joint]
+        
+        for joint in base_joints:
+            if joint in modality_config["state"]:
+                start = modality_config["state"][joint]["start"]
+                end = modality_config["state"][joint]["end"]
+                state_indices.extend(range(start, end))
+        
+        # Add velocity joints if pos_vel or pos_vel_torq (exclude head_joints_vel)
+        # if state_mode in ["pos_vel", "pos_vel_torq"]:
+        if state_mode in ["pos_vel"]:
+            vel_joints = [
+                # "torso_joints_vel", "head_joints_vel", "right_arm_joints_vel",
+                "torso_joints_vel", "right_arm_joints_vel",
+                "left_arm_joints_vel", "right_hand_joints_vel", "left_hand_joints_vel"
+            ]
+            # If action_mode is right_arm, exclude left-related joints
+            if action_mode == "right_arm":
+                vel_joints = [joint for joint in vel_joints if "left" not in joint]
+            for joint in vel_joints:
+                if joint in modality_config["state"]:
+                    start = modality_config["state"][joint]["start"]
+                    end = modality_config["state"][joint]["end"]
+                    state_indices.extend(range(start, end))
+        
+        # # Add torque joints if pos_vel_torq (exclude head_joints_torque)
+        # if state_mode == "pos_vel_torq":
+        #     torque_joints = [
+        #         # "torso_joints_torque", "head_joints_torque", "right_arm_joints_torque",
+        #         "torso_joints_torque", "right_arm_joints_torque",
+        #         "left_arm_joints_torque", "right_hand_joints_torque", "left_hand_joints_torque"
+        #     ]
+        #     # If action_mode is right_arm, exclude left-related joints
+        #     if action_mode == "right_arm":
+        #         torque_joints = [joint for joint in torque_joints if "left" not in joint]
+        #     for joint in torque_joints:
+        #         if joint in modality_config["state"]:
+        #             start = modality_config["state"][joint]["start"]
+        #             end = modality_config["state"][joint]["end"]
+        #             state_indices.extend(range(start, end))
     
     return sorted(state_indices)
 
-def get_action_indices(modality_config, action_mode):
+def get_action_indices(modality_config, action_mode, robot_type="allex"):
     """Get action indices based on action_mode"""
     action_indices = []
     
-    if action_mode == "right_arm":
-        # Only right arm and right finger joints
-        right_joints = ["right_arm_eef_pos", "right_finger_joints"]
-        for joint in right_joints:
+    if robot_type == "franka":
+        # Franka only supports right_arm mode (single arm robot)
+        franka_joints = ["arm_eef_pos", "finger_joints"]
+        for joint in franka_joints:
             if joint in modality_config["action"]:
                 start = modality_config["action"][joint]["start"]
                 end = modality_config["action"][joint]["end"]
                 action_indices.extend(range(start, end))
-    
-    elif action_mode == "dual_arm":
-        # Both arms and finger joints
-        all_joints = ["right_arm_eef_pos", "left_arm_eef_pos", "right_finger_joints", "left_finger_joints"]
-        for joint in all_joints:
-            if joint in modality_config["action"]:
-                start = modality_config["action"][joint]["start"]
-                end = modality_config["action"][joint]["end"]
-                action_indices.extend(range(start, end))
+    else:
+        # Allex robot joints (original logic)
+        if action_mode == "right_arm":
+            # Only right arm and right finger joints
+            right_joints = ["right_arm_eef_pos", "right_finger_joints"]
+            for joint in right_joints:
+                if joint in modality_config["action"]:
+                    start = modality_config["action"][joint]["start"]
+                    end = modality_config["action"][joint]["end"]
+                    action_indices.extend(range(start, end))
+        
+        elif action_mode == "dual_arm":
+            # Both arms and finger joints
+            all_joints = ["right_arm_eef_pos", "left_arm_eef_pos", "right_finger_joints", "left_finger_joints"]
+            for joint in all_joints:
+                if joint in modality_config["action"]:
+                    start = modality_config["action"][joint]["start"]
+                    end = modality_config["action"][joint]["end"]
+                    action_indices.extend(range(start, end))
     
     return sorted(action_indices)
 
 def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False, video_mode=None):
     # GPU 수 자동 결정
     gpus = get_gpu_count(vla_model)
-    
+
+    # Detect robot type and sim/real from data_dir
+    robot_type = detect_robot_type(data_dir)
+    sim_or_real = detect_sim_or_real(data_dir)
+
     # Extract task_name from data_dir (last part of the path)
     task_name = Path(data_dir).name
     
     # Create checkpoint name based on task and ablation conditions
-    checkpoint_name = f"{task_name}/{state_mode}_{action_mode}_{video_mode}"
+    if is_video_supported_model(vla_model):
+        checkpoint_name = f"{task_name}/{state_mode}_{action_mode}_{video_mode}"
+    else:
+        # univla는 video_mode가 없으므로 robotview로 고정
+        checkpoint_name = f"{task_name}/{state_mode}_{action_mode}_robotview"
     
     """Run the training script with calculated indices"""
     
     # Load modality configuration
-    modality_config = load_modality_config()
+    modality_config = load_modality_config(robot_type, data_dir)
     
     # Calculate indices using helper function
-    state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode)
+    state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode, robot_type)
     
     print(f"=== Ablation Study Configuration ===")
+    print(f"Robot Type: {robot_type}")
     print(f"VLA Model: {vla_model}")
     print(f"Data Directory: {data_dir}")
     print(f"Task Name: {task_name}")
@@ -169,6 +286,8 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
         "gr00t": Path(__file__).parent / "gr00t" / "slurm_ft_ablation_study.sh",
         "pi0": Path(__file__).parent / "pi0" / "slurm_pi0_train_ablation_study.sh",
         "pi0fast": Path(__file__).parent / "pi0" / "slurm_pi0_train_ablation_study.sh",
+        "diffusion": Path(__file__).parent / "pi0" / "slurm_pi0_train_ablation_study.sh",
+        "act": Path(__file__).parent / "pi0" / "slurm_pi0_train_ablation_study.sh",
         "univla": Path(__file__).parent / "univla" / "vla_scripts" / "run_conversion_and_training_david.sh"
     }
     
@@ -185,12 +304,16 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
     script_path.chmod(0o755)
     
     # job-name에서 모델명 제거하고 task_name 포함
-    job_name = f"{state_mode}_{action_mode}_{video_mode}"
+    if is_video_supported_model(vla_model):
+        job_name = f"{vla_model}_{state_mode}_{action_mode}_{video_mode}"
+    else:
+        # univla는 video_mode가 없으므로 robotview로 고정
+        job_name = f"{vla_model}_{state_mode}_{action_mode}_robotview"
     
     # 모델별 추가 인수 전달 (공통)
     if is_video_supported_model(vla_model):
         # video_mode를 지원하는 모델들
-        additional_args = [state_mode, action_mode, video_mode, vla_model]
+        additional_args = [state_mode, action_mode, video_mode, vla_model, robot_type, sim_or_real]
     else:
         # univla는 video_mode를 지원하지 않으므로 추가 인수 없음
         additional_args = []
@@ -206,7 +329,7 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
         cmd = [
             "sbatch",
             "--job-name", job_name,
-            "--comment", f"ablation study: {state_mode} + {action_mode} + {video_mode}",
+            "--comment", f"ablation study: {state_mode} + {action_mode} + {video_mode if is_video_supported_model(vla_model) else 'robotview'}",
             f"--gpus={gpus}",
             "--output", f"{log_dir}/slurm-%j-%x.log",
             "--error", f"{log_dir}/slurm-%j-%x.log",
@@ -255,31 +378,93 @@ def run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False,
             print(f"Training failed with exit code {e.returncode}")
             return False
 
-def run_pi0_dataset_conversion(data_dir):
-    """Run pi0 dataset conversion for all combinations of state_mode, action_mode, and video_mode"""
+def check_pi0_conversion_needed(data_dir):
+    """Check if pi0 dataset conversion is needed for any combination"""
+    # Detect robot type from data_dir
+    robot_type = detect_robot_type(data_dir)
+    action_modes = get_action_modes_for_robot(robot_type, data_dir)
     
-    total_combinations = len(STATE_MODES) * len(ACTION_MODES) * len(VIDEO_MODES)
+    # Extract task name from data_dir
+    task_name = Path(data_dir).name
+    
+    def get_short_name(state_mode, action_mode, video_mode):
+        """Get abbreviated combination name (same as in create_pi0_dataset.py)"""
+        # State mode abbreviation
+        state_map = {
+            "pos_only": "P",
+            "pos_vel": "PV", 
+            "pos_vel_torq": "PVT"
+        }
+        
+        # Action mode abbreviation
+        action_map = {
+            "right_arm": "R",
+            "dual_arm": "D"
+        }
+        
+        # Video mode abbreviation
+        video_map = {
+            "robotview": "R",
+            "multiview": "M"
+        }
+        
+        return f"{state_map[state_mode]}_{action_map[action_mode]}_{video_map[video_mode]}"
+    
+    # Check if any combination needs conversion
+    for state_mode in STATE_MODES:
+        for action_mode in action_modes:
+            for video_mode in get_video_modes_for_robot(robot_type, data_dir):
+                # Check if converted dataset exists for this combination
+                # Converted datasets are stored in RLWRLD/pi0/{task_name}/{combination_name}/
+                converted_dir = Path("/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/pi0") / task_name
+                if not converted_dir.exists():
+                    return True  # Task directory doesn't exist, needs conversion
+                
+                # Check if the specific combination exists
+                # Combination name format: abbreviated (e.g., pos_vel_right_arm_robotview -> PV_R_R)
+                combination_name = get_short_name(state_mode, action_mode, video_mode)
+                combination_dir = converted_dir / combination_name
+                if not combination_dir.exists():
+                    return True  # This combination needs conversion
+                
+                # Check if the converted dataset has required files
+                info_file = combination_dir / "meta" / "info.json"
+                if not info_file.exists():
+                    return True  # Conversion incomplete
+    
+    return False  # All combinations are already converted
+
+def run_pi0_dataset_conversion(data_dir):
+    """Run pi0/diffusion/act dataset conversion for all combinations of state_mode, action_mode, and video_mode"""
+    
+    # Detect robot type from data_dir
+    robot_type = detect_robot_type(data_dir)
+    action_modes = get_action_modes_for_robot(robot_type, data_dir)
+    
+    # Get video modes for this robot
+    video_modes = get_video_modes_for_robot(robot_type, data_dir)
+    total_combinations = len(STATE_MODES) * len(action_modes) * len(video_modes)
     current_combination = 0
     
-    print(f"Converting pi0 datasets for {total_combinations} combinations")
+    print(f"Converting pi0/diffusion/act datasets for {robot_type} robot with {total_combinations} combinations")
     
     # Extract task name from data_dir
     task_name = Path(data_dir).name
     
     # Load modality configuration once
-    modality_config = load_modality_config()
+    modality_config = load_modality_config(robot_type, data_dir)
     
     results = []
     
     for state_mode in STATE_MODES:
-        for action_mode in ACTION_MODES:
-            for video_mode in VIDEO_MODES:
+        for action_mode in action_modes:
+            for video_mode in video_modes:
                 current_combination += 1
                 print(f"[{current_combination}/{total_combinations}] {state_mode} + {action_mode} + {video_mode}: ", end="")
                 
                 try:
                     # Calculate indices using helper function
-                    state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode)
+                    state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode, robot_type)
                     
                     # Run pi0 dataset conversion
                     script_path = Path(__file__).parent / "pi0" / "create_pi0_dataset.py"
@@ -311,18 +496,41 @@ def run_pi0_dataset_conversion(data_dir):
     print(f"\nSummary: {successful_conversions}/{total_combinations} conversions completed successfully")
     return successful_conversions > 0
 
-def run_all_combinations(vla_model, data_dir, use_sbatch=False):
+def run_all_combinations(vla_model, data_dir):
     """Run all combinations of state_mode and action_mode"""
     
-    # video_modes는 pi0, pi0fast, gr00t에만 적용
+    # Detect robot type from data_dir
+    robot_type = detect_robot_type(data_dir)
+    action_modes = get_action_modes_for_robot(robot_type, data_dir)
+    
+    # Load modality configuration once for indices calculation
+    modality_config = load_modality_config(robot_type, data_dir)
+    
+    # Print indices summary for all combinations
+    print(f"\n{'='*60}")
+    print(f"INDICES SUMMARY for {vla_model.upper()} ({robot_type.upper()} ROBOT)")
+    print(f"{'='*60}")
+    
+    for state_mode in STATE_MODES:
+        for action_mode in action_modes:
+            state_indices, action_indices, state_indices_str, action_indices_str = calculate_indices(modality_config, state_mode, action_mode, robot_type)
+            print(f"{state_mode}_{action_mode}:")
+            print(f"  State indices: {state_indices_str}")
+            print(f"  Action indices: {action_indices_str}")
+            print(f"  State dim: {len(state_indices)}, Action dim: {len(action_indices)}")
+    
+    print(f"{'='*60}\n")
+    # exit(1)
+    
+    # video_modes는 pi0, pi0fast, gr00t, diffusion, act에만 적용
     if is_video_supported_model(vla_model):
-        video_modes = VIDEO_MODES
-        total_combinations = len(STATE_MODES) * len(ACTION_MODES) * len(video_modes)
-        print(f"Running {total_combinations} combinations ({'SLURM' if use_sbatch else 'Sequential'} mode) with video modes")
+        video_modes = get_video_modes_for_robot(robot_type, data_dir)
+        total_combinations = len(STATE_MODES) * len(action_modes) * len(video_modes)
+        print(f"Running {total_combinations} combinations (SLURM mode) with video modes for {robot_type} robot")
     else:
         video_modes = ["robotview"]  # univla는 robotview만 사용
-        total_combinations = len(STATE_MODES) * len(ACTION_MODES)
-        print(f"Running {total_combinations} combinations ({'SLURM' if use_sbatch else 'Sequential'} mode)")
+        total_combinations = len(STATE_MODES) * len(action_modes)
+        print(f"Running {total_combinations} combinations (SLURM mode) for {robot_type} robot")
     
     current_combination = 0
     results = []
@@ -332,81 +540,211 @@ def run_all_combinations(vla_model, data_dir, use_sbatch=False):
     import time
     base_timestamp = int(time.time())
     
+    # Special handling for univla to avoid dataset conversion race conditions
+    if vla_model == "univla":
+        print("🔄 Special handling for univla: Checking if dataset conversion is needed...")
+        
+        # Check if dataset is already converted
+        task_name = Path(data_dir).name
+        converted_data_dir = Path(__file__).parent / "univla" / "vla_scripts" / "converted_data_for_univla" / task_name
+        
+        # Count original episodes from LeRobot dataset structure
+        original_episodes = 0
+        if Path(data_dir).exists():
+            try:
+                # LeRobot datasets have structure: data/chunk-000/episode_*.parquet
+                data_chunk_dir = Path(data_dir) / "data" / "chunk-000"
+                if data_chunk_dir.exists():
+                    for item in data_chunk_dir.iterdir():
+                        if item.is_file() and item.name.startswith('episode_') and item.name.endswith('.parquet'):
+                            original_episodes += 1
+                else:
+                    # Fallback: check if it's already a converted format with episode directories
+                    for item in Path(data_dir).iterdir():
+                        if item.is_dir() and item.name.startswith('episode_'):
+                            original_episodes += 1
+                print(f"📊 Original dataset has {original_episodes} episodes")
+            except Exception as e:
+                print(f"⚠️ Could not count original episodes: {e}")
+                original_episodes = 0
+        
+        # Check if conversion is already complete
+        conversion_complete = False
+        if converted_data_dir.exists() and original_episodes > 0:
+            converted_episodes = 0
+            for item in converted_data_dir.iterdir():
+                if (item.is_dir() and 
+                    item.name.startswith('episode_') and
+                    (item / "state.npy").exists() and 
+                    (item / "action.npy").exists()):
+                    converted_episodes += 1
+            
+            if converted_episodes >= original_episodes:
+                print(f"✅ Dataset already converted! {converted_episodes}/{original_episodes} episodes found.")
+                conversion_complete = True
+            else:
+                print(f"📊 Partial conversion found: {converted_episodes}/{original_episodes} episodes")
+        
+        # If conversion is not complete, run one job to do the conversion
+        if not conversion_complete:
+            print("🔄 Running dataset conversion...")
+            first_state_mode = STATE_MODES[0]
+            first_action_mode = action_modes[0]
+            first_video_mode = video_modes[0]
+            
+            print(f"[Conversion] {first_state_mode} + {first_action_mode} (with dataset conversion): ", end="")
+            
+            try:
+                # Run first combination with dataset conversion
+                success = run_training(vla_model, data_dir, first_state_mode, first_action_mode, use_sbatch=True, video_mode=first_video_mode)
+                if success:
+                    job_ids.append({'state_mode': first_state_mode, 'action_mode': first_action_mode})
+                    print("✅ submitted")
+                    
+                    # Wait for dataset conversion to complete
+                    print("⏳ Waiting for dataset conversion to complete...")
+                    conversion_timeout = 1800  # 30 minutes
+                    check_interval = 30
+                    elapsed_time = 0
+                    
+                    while elapsed_time < conversion_timeout:
+                        if converted_data_dir.exists():
+                            converted_episodes = 0
+                            for item in converted_data_dir.iterdir():
+                                if (item.is_dir() and 
+                                    item.name.startswith('episode_') and
+                                    (item / "state.npy").exists() and 
+                                    (item / "action.npy").exists()):
+                                    converted_episodes += 1
+                            
+                            print(f"📊 Converted episodes: {converted_episodes}/{original_episodes}")
+                            
+                            if original_episodes > 0 and converted_episodes >= original_episodes:
+                                print("✅ Dataset conversion completed!")
+                                break
+                        
+                        time.sleep(check_interval)
+                        elapsed_time += check_interval
+                    
+                    if elapsed_time >= conversion_timeout:
+                        print("⚠️ Dataset conversion timeout reached. Proceeding anyway...")
+                    
+                    # Skip this combination in the main loop since we already submitted it
+                    current_combination = 1
+                else:
+                    print("❌ failed")
+                    return False
+                    
+            except Exception as e:
+                print(f"❌ error: {e}")
+                return False
+        else:
+            print("✅ Dataset conversion not needed, proceeding with training...")
+            current_combination = 0
+    
+    # Track which combinations have been processed for univla
+    processed_combinations = set()
+    if vla_model == "univla" and current_combination > 0:
+        # Mark the first combination as already processed
+        first_state_mode = STATE_MODES[0]
+        first_action_mode = action_modes[0]
+        processed_combinations.add((first_state_mode, first_action_mode))
+    
+    # Run remaining combinations (or all combinations for non-univla models)
     for state_mode in STATE_MODES:
-        for action_mode in ACTION_MODES:
+        for action_mode in action_modes:
             for video_mode in video_modes:
+                # Skip combinations that have already been processed for univla
+                if vla_model == "univla" and (state_mode, action_mode) in processed_combinations:
+                    current_combination += 1
+                    continue
+                    
                 current_combination += 1
                 if is_video_supported_model(vla_model):
                     print(f"[{current_combination}/{total_combinations}] {state_mode} + {action_mode} + {video_mode}: ", end="")
                 else:
                     print(f"[{current_combination}/{total_combinations}] {state_mode} + {action_mode}: ", end="")
-                
+            
                 # Create unique timestamp for each combination
                 unique_timestamp = base_timestamp + current_combination
                 
                 try:
-                    if use_sbatch:
-                        success = run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=True, video_mode=video_mode)
-                        if success:
-                            if is_video_supported_model(vla_model):
-                                job_ids.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode})
-                            else:
-                                job_ids.append({'state_mode': state_mode, 'action_mode': action_mode})
-                            print("✅ submitted")
-                        else:
-                            print("❌ failed")
-                    else:
-                        success = run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=False, video_mode=video_mode)
+                    # Always use SLURM mode
+                    success = run_training(vla_model, data_dir, state_mode, action_mode, use_sbatch=True, video_mode=video_mode)
+                    if success:
                         if is_video_supported_model(vla_model):
-                            results.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode, 'success': success})
+                            job_ids.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode})
                         else:
-                            results.append({'state_mode': state_mode, 'action_mode': action_mode, 'success': success})
-                        print("✅ success" if success else "❌ failed")
-                        
+                            job_ids.append({'state_mode': state_mode, 'action_mode': action_mode})
+                        print("✅ submitted")
+                    else:
+                        print("❌ failed")
+                            
                 except Exception as e:
                     print(f"❌ error: {e}")
-                    if not use_sbatch:
-                        if is_video_supported_model(vla_model):
-                            results.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode, 'success': False, 'error': str(e)})
-                        else:
-                            results.append({'state_mode': state_mode, 'action_mode': action_mode, 'success': False, 'error': str(e)})
+                    # Always use SLURM mode now, so add to results for tracking
+                    if is_video_supported_model(vla_model):
+                        results.append({'state_mode': state_mode, 'action_mode': action_mode, 'video_mode': video_mode, 'success': False, 'error': str(e)})
+                    else:
+                        results.append({'state_mode': state_mode, 'action_mode': action_mode, 'success': False, 'error': str(e)})
     
-    print(f"\nSummary: {len(job_ids if use_sbatch else results)} jobs {'submitted' if use_sbatch else 'completed'}")
-    if use_sbatch:
-        print("Monitor with: squeue -u $USER")
-    return len(job_ids if use_sbatch else results) > 0
+    print(f"\nSummary: {len(job_ids)} jobs submitted")
+    import os
+    user = os.getenv('USER', 'david')
+    print(f"Monitor with: squeue -u {user}")
+    return len(job_ids) > 0
 
 def main():
     parser = argparse.ArgumentParser(description="Run ablation study for VLA models")
     parser.add_argument("--vla_model", type=str, required=False,
-                       default="univla", choices=SUPPORTED_VLA_MODELS,
-                       help="VLA model to use for training (pi0 will convert data first, then train)")
+                       choices=SUPPORTED_VLA_MODELS,
+                       help="VLA model to use for training (pi0/diffusion/act will convert data first, then train)")
     parser.add_argument("--data_dir", type=str, required=False,
-                       default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/250718/allex_gesture_easy_all",
+                    ### allex robot
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_gesture_easy_all",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/allex_lift_cylinder",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder_reduced_hand",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder_reduced_hand_10",
+                    ##### new dataset
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/gesture",
+                       default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cube",
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/lift_cylinder",
+                    ### franka dataset
+                    #    default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/franka_lift_cylinder",
+                    ### real allex dataset
+                        # default="/virtual_lab/rlwrld/david/.cache/huggingface/lerobot/RLWRLD/_allex_real_lift_bottle",
+                    ###
                        help="Path to input data directory")
     parser.add_argument("--state_mode", type=str, required=False,
                     #    choices=["pos_only", "pos_vel", "pos_vel_torq"],
-                    #    help="State mode: pos_only, pos_vel, or pos_vel_torq")
                        choices=STATE_MODES,
-                       help="State mode: pos_only, or pos_vel")
+                       help="State mode: pos_only or pos_vel")
+                    #    help="State mode: pos_only, pos_vel or pos_vel_torq")
     parser.add_argument("--action_mode", type=str, required=False,
                        choices=ACTION_MODES,
                        help="Action mode: right_arm or dual_arm")
     parser.add_argument("--video_mode", type=str, required=False, default="multiview",
                        choices=VIDEO_MODES,
-                       help="Video mode: robotview or multiview (only for pi0/pi0fast)")
+                       help="Video mode: robotview or multiview (only for gr00t/pi0/pi0fast/diffusion/act)")
     parser.add_argument("--run_mode_all", action="store_true",
                        help="Run all combinations of state_mode and action_mode")
-    parser.add_argument("--sbatch", action="store_true",
-                       help="Use SLURM sbatch for parallel execution")
+    # Removed --sbatch argument - now always uses SLURM
     parser.add_argument("--pi0_dataset_convert", action="store_true",
-                       help="Convert dataset for pi0 model for all state_mode and action_mode combinations")
+                       help="Convert dataset for pi0/diffusion/act models for all state_mode and action_mode combinations")
 
     
     args = parser.parse_args()
     
-    # Validate data directory
-    if not Path(args.data_dir).exists():
+    # Validate data directory (only if not using --run_mode_all without specific model)
+    if args.data_dir is None:
+        if args.run_mode_all and args.vla_model is None:
+            print("Error: --data_dir is required when using --run_mode_all")
+            sys.exit(1)
+        elif not args.pi0_dataset_convert:
+            print("Error: --data_dir is required")
+            sys.exit(1)
+    elif not Path(args.data_dir).exists():
         print(f"Error: Data directory does not exist: {args.data_dir}")
         sys.exit(1)
     
@@ -421,9 +759,24 @@ def main():
     # Check if run_mode_all is enabled
     if args.run_mode_all:
         if args.vla_model is None:
+            # Check if pi0 dataset conversion is needed (only when running all models)
+            if check_pi0_conversion_needed(args.data_dir):
+                print("🔄 Step 1: Running pi0 dataset conversion for all combinations...")
+                conversion_success = run_pi0_dataset_conversion(args.data_dir)
+                if not conversion_success:
+                    print("Some dataset conversions failed. Check the summary above.")
+                    sys.exit(1)
+                print("✅ Dataset conversion completed successfully!\n")
+            else:
+                print("✅ Pi0 dataset conversion not needed - all combinations already converted!\n")
+            
+            # Then, run training for all models
+            print("🔄 Step 2: Starting training for all models...")
+        
+        if args.vla_model is None:
             # Run all models if no specific model is specified
             all_models = SUPPORTED_VLA_MODELS
-            print(f"Running --run_mode_all for all models: {all_models}")
+            print(f"Running training for all models: {all_models}")
             
             overall_success = True
             for model in all_models:
@@ -431,7 +784,7 @@ def main():
                 print(f"Running ablation study for {model.upper()}")
                 print(f"{'='*60}")
                 
-                success = run_all_combinations(model, args.data_dir, use_sbatch=args.sbatch)
+                success = run_all_combinations(model, args.data_dir)
                 if not success:
                     print(f"Some combinations failed for {model}. Check the summary above.")
                     overall_success = False
@@ -447,7 +800,21 @@ def main():
                 print(f"\n✅ All models completed successfully!")
         else:
             # Run for specific model
-            success = run_all_combinations(args.vla_model, args.data_dir, use_sbatch=args.sbatch)
+            print(f"🔄 Running training for specific model: {args.vla_model}")
+            
+            # Only run pi0 dataset conversion if the model needs it
+            if args.vla_model in ["pi0", "pi0fast", "diffusion", "act"]:
+                if check_pi0_conversion_needed(args.data_dir):
+                    print("🔄 Running pi0 dataset conversion for pi0-family models...")
+                    conversion_success = run_pi0_dataset_conversion(args.data_dir)
+                    if not conversion_success:
+                        print("Some dataset conversions failed. Check the summary above.")
+                        sys.exit(1)
+                    print("✅ Dataset conversion completed successfully!\n")
+                else:
+                    print("✅ Pi0 dataset conversion not needed - all combinations already converted!\n")
+            
+            success = run_all_combinations(args.vla_model, args.data_dir)
             if not success:
                 print("Some combinations failed. Check the summary above.")
                 sys.exit(1)
@@ -461,27 +828,50 @@ def main():
             print("Use --run_mode_all to run all combinations automatically")
             sys.exit(1)
         
-        # Validate video_mode for pi0/pi0fast
-        if args.vla_model in VIDEO_SUPPORTED_MODELS and args.video_mode is None:
-            print("Error: --video_mode is required for pi0/pi0fast models")
+        # Validate action_mode for franka robot
+        robot_type = detect_robot_type(args.data_dir)
+        supported_action_modes = get_action_modes_for_robot(robot_type)
+        if args.action_mode not in supported_action_modes:
+            print(f"Error: --action_mode '{args.action_mode}' is not supported for {robot_type} robot")
+            print(f"Supported action modes for {robot_type}: {supported_action_modes}")
             sys.exit(1)
         
-        # Run single training
-        if args.sbatch:
-            success = run_training(args.vla_model, args.data_dir, args.state_mode, args.action_mode, use_sbatch=True, video_mode=args.video_mode)
-            if success:
-                print("SLURM job submitted successfully!")
+        # Validate video_mode for pi0/pi0fast/diffusion/act
+        if args.vla_model in VIDEO_SUPPORTED_MODELS and args.video_mode is None:
+            print("Error: --video_mode is required for pi0/pi0fast/diffusion/act models")
+            sys.exit(1)
+        
+        # Check if dataset conversion is needed for pi0-family models
+        if args.vla_model in ["pi0", "pi0fast", "diffusion", "act"]:
+            if check_pi0_conversion_needed(args.data_dir):
+                print("🔄 Running pi0 dataset conversion for pi0-family models...")
+                conversion_success = run_pi0_dataset_conversion(args.data_dir)
+                if not conversion_success:
+                    print("Some dataset conversions failed. Check the summary above.")
+                    sys.exit(1)
+                print("✅ Dataset conversion completed successfully!\n")
             else:
-                print("SLURM job submission failed.")
-                sys.exit(1)
+                print("✅ Pi0 dataset conversion not needed - all combinations already converted!\n")
+        
+        # Run single training (always use SLURM)
+        success = run_training(args.vla_model, args.data_dir, args.state_mode, args.action_mode, use_sbatch=True, video_mode=args.video_mode)
+        if success:
+            print("SLURM job submitted successfully!")
         else:
-            success = run_training(args.vla_model, args.data_dir, args.state_mode, args.action_mode, use_sbatch=False, video_mode=args.video_mode)
-            if not success:
-                sys.exit(1)
+            print("SLURM job submission failed.")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main() 
 
-### 최초로 task 마다 한번 수행 해야함. 
-# python run_ablation_study.py --pi0_dataset_convert
-# python run_ablation_study.py --vla_model univla --state_mode pos_vel_torq --action_mode dual_arm 
+
+
+### 체크포인트 삭제 note
+# cd /virtual_lab/rlwrld/david/VLA_models_training/_checkpoints
+# find gr00t/franka_lift_cylinder* -type d \( -name "checkpoint-2000" -o -name "checkpoint-4000" \) -exec rm -rf {} +
+# find pi0/allex_gesture_easy_all* -type d \( -name "005000" -o -name "010000" -o -name "015000" -o -name "020000" -o -name "025000" \) -exec rm -rf {} +
+# find diffusion/allex_gesture_easy_all* -type d \( -name "005000" -o -name "010000" -o -name "015000" -o -name "020000" -o -name "025000" \) -exec rm -rf {} +
+# find act/allex_gesture_easy_all* -type d \( -name "005000" -o -name "010000" -o -name "015000" -o -name "020000" -o -name "025000" \) -exec rm -rf {} +
+# find univla/allex_gesture_easy_all* -type d \( -name "10000" -o -name "20000" \) -exec rm -rf {} +
+# find pi0/franka_lift_cylinder* -type d \( -name "020000" \) -exec rm -rf {} +
+# find act/franka_lift_cylinder* -type d \( -name "020000" -o -name "040000" \) -exec rm -rf {} +

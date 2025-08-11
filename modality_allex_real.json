@@ -1,0 +1,40 @@
+{
+    "state": {
+        "right_arm_joints": {
+            "start": 0,
+            "end": 7
+        },
+        "right_hand_joints": {
+            "start": 7,
+            "end": 22
+        },
+        "right_arm_joints_vel": {
+            "start": 22,
+            "end": 29
+        },
+        "right_hand_joints_vel": {
+            "start": 29,
+            "end": 44
+        }
+    },
+    "action": {
+        "right_arm_eef_pos": {
+            "start": 0,
+            "end": 6
+        },
+        "right_finger_joints": {
+            "start": 6,
+            "end": 21
+        }
+    },
+    "video": {
+        "camera_agentview": {
+            "original_key": "observation.images.agentview"
+        }
+    },
+    "annotation": {
+        "human.task_description": {
+            "original_key": "task_index"
+        }
+    }
+} 

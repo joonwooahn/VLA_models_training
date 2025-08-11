@@ -3,10 +3,12 @@
 from typing import Optional
 import os
 import json
+import glob
 import torch
 import torch.nn as nn
 import numpy as np
 from PIL import Image
+from safetensors.torch import load_file as load_safetensors_file
 
 
 from transformers import AutoConfig, AutoImageProcessor, AutoModelForVision2Seq, AutoProcessor
@@ -68,14 +70,62 @@ class UniVLAInference:
 
         # 1. VLA 본체 모델 로드
         print(f"[*] VLA 모델 로딩: {saved_model_path}")
-        self.vla = AutoModelForVision2Seq.from_pretrained(
-            saved_model_path,
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True,
-        ).to(self.device).eval()
+        base_vla_path = \
+            "/virtual_lab/rlwrld/david/VLA_models_training/univla/vla_scripts/univla-7b"
 
-        # 2. Processor 로드
-        self.processor = AutoProcessor.from_pretrained(saved_model_path, trust_remote_code=True)
+        # Detect checkpoint contents
+        checkpoint_config_path = os.path.join(saved_model_path, "config.json")
+        has_config = os.path.isfile(checkpoint_config_path)
+        shard_files = sorted(glob.glob(os.path.join(saved_model_path, "model-*.safetensors")))
+
+        # Build state_dict from shards if needed
+        state_dict_to_load = None
+        model_dir_for_loading = saved_model_path
+        if not has_config:
+            if shard_files:
+                print("[!] config.json 미존재 → base UniVLA에서 가중치만 병합 로드")
+                model_dir_for_loading = base_vla_path
+                # Merge sharded safetensors into a single state_dict
+                state_dict_to_load = {}
+                for shard_path in shard_files:
+                    print(f"    - shard 로딩: {os.path.basename(shard_path)}")
+                    shard_state = load_safetensors_file(shard_path, device="cpu")
+                    state_dict_to_load.update(shard_state)
+            else:
+                # No config, no shards → attempt direct load (will likely fail, but keep behavior explicit)
+                print("[!] 체크포인트 폴더에 config.json과 shard 가중치가 없습니다. 직접 로드를 시도합니다.")
+                model_dir_for_loading = saved_model_path
+
+        if state_dict_to_load is None:
+            # Standard load (checkpoint has config or we intentionally load as-is)
+            self.vla = AutoModelForVision2Seq.from_pretrained(
+                model_dir_for_loading,
+                torch_dtype=torch.bfloat16,
+                trust_remote_code=True,
+            ).to(self.device).eval()
+        else:
+            # Load base model first, then apply merged shard weights explicitly
+            self.vla = AutoModelForVision2Seq.from_pretrained(
+                model_dir_for_loading,
+                torch_dtype=torch.bfloat16,
+                trust_remote_code=True,
+            ).to(self.device)
+            missing, unexpected = self.vla.load_state_dict(state_dict_to_load, strict=False)
+            if missing:
+                print(f"[!] load_state_dict 누락 파라미터 수: {len(missing)} (표시 생략)")
+            if unexpected:
+                print(f"[!] load_state_dict 예기치 않은 파라미터 수: {len(unexpected)} (표시 생략)")
+            self.vla.eval()
+
+        # 2. Processor 로드 (체크포인트에 없으면 base 경로에서 로드)
+        has_preprocessor = (
+            os.path.isfile(os.path.join(saved_model_path, "preprocessor_config.json"))
+            or os.path.isfile(os.path.join(saved_model_path, "tokenizer_config.json"))
+        )
+        processor_load_dir = saved_model_path if has_preprocessor else base_vla_path
+        if not has_preprocessor:
+            print("[!] processor 파일 미존재 → base UniVLA processor 사용")
+        self.processor = AutoProcessor.from_pretrained(processor_load_dir, trust_remote_code=True)
         
         # 3. ActionDecoderHead 생성 및 가중치 로드
         print(f"[*] Action Decoder 로딩: {decoder_path}")

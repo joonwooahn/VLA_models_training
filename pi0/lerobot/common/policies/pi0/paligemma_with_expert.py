@@ -228,7 +228,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
     def embed_language_tokens(self, tokens: torch.Tensor):
         # Handle different GemmaModel structures
         if hasattr(self.paligemma.language_model, 'model'):
-        return self.paligemma.language_model.model.embed_tokens(tokens)
+            return self.paligemma.language_model.model.embed_tokens(tokens)
         else:
             return self.paligemma.language_model.embed_tokens(tokens)
 

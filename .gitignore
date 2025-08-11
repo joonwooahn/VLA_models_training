@@ -6,6 +6,7 @@ runs/
 univla/vla_scripts/runs/
 gr00t/runs/
 pi0/runs/
+_checkpoints/
 
 # Model files and checkpoints
 univla/vla_scripts/univla-7b/

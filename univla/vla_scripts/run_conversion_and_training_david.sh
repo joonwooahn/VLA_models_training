@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --output=/virtual_lab/rlwrld/david/VLA_models_training/_logs/univla/slurm-%j-%x.log
-#SBATCH --gpus=4
+#SBATCH --gpus=2
 #SBATCH --partition=rlwrld
 #SBATCH --nodes=1
 
@@ -217,6 +217,12 @@ print_step "2단계: UniVLA 모델 훈련"
 
 # 훈련 스크립트 경로
 FINETUNE_SCRIPT="$SCRIPT_DIR/finetune_rlwrld.py"
+
+########################################################################################    tmp_test
+# STATE_INDICES="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18"    # lift_cylinder_reduced_hand & lift_cylinder_reduced_hand_10
+# ACTION_INDICES="0,1,2,3,4,5,6,7,8,9,10,11"    # lift_cylinder_reduced_hand
+# ACTION_INDICES="0,1,2,3,4,5,6,7,8,9"            # lift_cylinder_reduced_hand_10
+########################################################################################    tmp_test
 
 print_info "훈련 스크립트 실행 준비 완료"
 print_info "  데이터 경로: $OUTPUT_DATA"

@@ -327,13 +327,13 @@ class FinetuneConfig:
     
     dataset_name: str = "real_world"                                    # Name of fine-tuning dataset (e.g., `droid_wipe`)
     # run_root_dir: Path = Path("runs")                               # Path to directory to store logs & checkpoints
-    run_root_dir: Path = Path("/virtual_lab/rlwrld/david/VLA_models_training/_checkpoints/unvla")   # Path to directory to store logs & checkpoints
+    run_root_dir: Path = Path("/virtual_lab/rlwrld/david/VLA_models_training/_checkpoints/univla")   # Path to directory to store logs & checkpoints
     adapter_tmp_dir: Path = Path("adapter-tmp")                     # Temporary directory for LoRA weights before fusing
 
     # Fine-tuning Parameters
     batch_size: int = 8                                             # Fine-tuning batch size
     max_steps: int = 30001                                          # Max number of fine-tuning steps
-    save_steps: int = 5000                                          # Interval for checkpoint saving
+    save_steps: int = 10000                                          # Interval for checkpoint saving
     learning_rate: float = 3.5e-4                                   # Fine-tuning learning rate
     grad_accumulation_steps: int = 1                                # Gradient accumulation steps
     image_aug: bool = True                                         # Whether to train with image augmentations
