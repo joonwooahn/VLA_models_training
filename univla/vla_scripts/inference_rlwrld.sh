@@ -5,7 +5,7 @@
 #SBATCH --partition=batch
 #SBATCH --gpus=1
 
-# srun --gpus=1 --nodes=1 --pty /bin/bash
+# srun --comment="univla-finetune-rlwrld" --gpus=1 --nodes=1 --pty /bin/bash
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate univla_vla
